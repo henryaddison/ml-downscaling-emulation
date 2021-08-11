@@ -26,7 +26,7 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    cpm_files = glob.glob(f"{args.data_dir}/2.2km/rcp85/01/pr/*.nc")
+    cpm_files = glob.glob(f"{args.data_dir}/2.2km/rcp85/01/pr/day/*.nc")
 
     cpm_cube = iris.load_cube(cpm_files[0])
 
