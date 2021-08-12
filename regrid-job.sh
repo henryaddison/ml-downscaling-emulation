@@ -4,7 +4,9 @@
 #PBS -l select=1:ncpus=1:mem=500M
 #PBS -l walltime=0:0:10
 
-conda activate bpdownscaling
+source $HOME/.bash_profile
+
+conda activate downscaling
 
 set -euo pipefail
 
