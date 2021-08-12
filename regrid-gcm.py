@@ -50,3 +50,5 @@ if __name__ == '__main__':
             rp_gcm_cube = single_year_gcmcube.regrid(cpm_cube, iris.analysis.Nearest())
 
             iris.save(rp_gcm_cube, f"{output_dir}/{var}_rcp85_land-gcm_uk_60km_01_day_rp_regrid_{year}1201-{year+1}1130.nc")
+
+    print("All done")
