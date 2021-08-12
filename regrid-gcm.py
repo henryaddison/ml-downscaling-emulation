@@ -1,8 +1,10 @@
 import argparse
 import glob
+import itertools
 import os
-import iris
+
 import cftime
+import iris
 
 variables = ["pr", "psl"]
 
@@ -40,7 +42,7 @@ if __name__ == '__main__':
         output_dir = f"{args.derived_data}/60km-2.2km-regrid-nn/rcp85/01/{var}/day"
         os.makedirs(output_dir, exist_ok=True)
 
-        for year in range(1980, 2000):
+        for year in  itertools.chain(range(1980, 2000), range(2020, 2040), range(2060, 2080)):
             gcm_cube = iris.load_cube(gcm_file(year, var))
 
             single_year_gcmcube = gcm_cube.extract(iris.Constraint(time=lambda cell: cftime.Datetime360Day(year, 12, 1, 12, 0, 0, 0) <= cell.point <= cftime.Datetime360Day(year+1, 11, 30, 12, 0, 0, 0)))
