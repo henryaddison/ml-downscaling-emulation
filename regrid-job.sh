@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 #
-#PBS -l select=1:ncpus=1:mem=500M
+#PBS -l select=1:ncpus=1:mem=1G
 #PBS -l walltime=0:0:10
 
-source $HOME/.bash_profile
+source $HOME/.profile
 
 conda activate downscaling
 

@@ -7,7 +7,11 @@ import cftime
 variables = ["pr", "psl"]
 
 def gcm_file(year, var):
-    start = (year // 10) * 10 - 1
+    if (year % 10) <= 8:
+        start = (year // 10) * 10 - 1
+    else:
+        start = year
+
     end = start + 10
 
     return f"{args.data_dir}/60km/rcp85/01/{var}/day/{var}_rcp85_land-gcm_uk_60km_01_day_{start}1201-{end}1130.nc"
