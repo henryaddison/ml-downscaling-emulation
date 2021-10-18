@@ -94,7 +94,7 @@ if __name__ == '__main__':
     regridded_gcmdata = regridded_gcmdata.loc[constraints]
     regridded_gcmdata = regridded_gcmdata.reset_coords()[predictors]
 
-    merged_data = xr.merge([regridded_gcmdata, cpmdata])
+    merged_data = xr.merge([regridded_gcmdata, cpmdata], join='inner')
 
     # split training/test based on date
     training_data = merged_data.isel({"time": range(0,360)})
