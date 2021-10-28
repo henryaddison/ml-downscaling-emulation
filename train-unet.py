@@ -10,8 +10,9 @@ from torch.utils.data import random_split, DataLoader, TensorDataset
 import numpy as np
 
 def get_args():
-    parser = argparse.ArgumentParser(description='Regrid GCM data to match the CPM data',
+    parser = argparse.ArgumentParser(description='Train U-Net to downscale',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--loss', '-l', dest='loss', type=str, default='l1', help='Loss function')
     parser.add_argument('--hi-res', dest='hires_file', type=Path, required=True,
                         help='Path to file containing 2.2km data')
     parser.add_argument('--lo-res', dest='lores_files', nargs='+', type=Path, required=True,
@@ -108,7 +109,12 @@ if __name__ == '__main__':
     num_predictors, _, _ = train_dl.dataset.dataset[0][0].shape
     model = unet.UNet(num_predictors, 1).to(device=device)
 
-    criterion = torch.nn.L1Loss(reduction='mean').to(device)
+    if args.loss == 'l1':
+        criterion = torch.nn.L1Loss(reduction='mean').to(device)
+    elif args.loss == 'mse':
+        criterion = torch.nn.MSELoss().to(device)
+    else:
+        raise("Unkwown loss function")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=2e-4)
 
