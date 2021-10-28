@@ -1,0 +1,40 @@
+unet-london-full-pr-20-epochs:
+  cmd: lsub_nonblock -m 16 --condaenv downscaling --jobname unet-london-full-pr --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --lo-res $WORK/60km-2.2km-lin-london/numpy/rcp85/01/pr/day/pr.npy --hi-res $WORK/2.2km-london/numpy/rcp85/01/pr/day/pr.npy --model $WORK/checkpoints/london-full --epochs 20
+  job_id: 3767490
+  submitted: 2021-10-26 16:00
+  summary: not converged (val loss bouncing around unchanged and train loss descreasing)
+
+unet-london-full-pr-psl-20-epochs:
+  cmd: lsub_nonblock -m 16 --condaenv downscaling --jobname unet-london-full-pr-psl-20-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --lo-res $WORK/60km-2.2km-lin-london/numpy/rcp85/01/pr/day/pr.npy $WORK/60km-2.2km-lin-london/numpy/rcp85/01/psl/day/psl.npy --hi-res $WORK/2.2km-london/numpy/rcp85/01/pr/day/pr.npy --model $WORK/checkpoints/$\{PBS_JOBID\} --epochs 20
+  job_id: 3768612
+  submitted: 2021-10-27
+  summary: unlikely to have converged
+
+unet-london-full-pr-20-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-london-full-pr --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --lo-res $WORK/60km-2.2km-lin-london/numpy/rcp85/01/pr/day/pr.npy --hi-res $WORK/2.2km-london/numpy/rcp85/01/pr/day/pr.npy --model $WORK/checkpoints/$\{PBS_JOBID\} --epochs 20
+  job_id: 3769606
+  submitted: 2021-10-28 10:30
+  summary: much faster now on GPU and runs immediately on CNU queue
+
+unet-london-full-pr-20-epochs-64-batch-size-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-london-full-pr-batch-size-test --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --lo-res $WORK/60km-2.2km-lin-london/numpy/rcp85/01/pr/day/pr.npy --hi-res $WORK/2.2km-london/numpy/rcp85/01/pr/day/pr.npy --model $WORK/checkpoints/$\{PBS_JOBID\} --epochs 20 --batch-size 64
+  job_id: 3769609
+  submitted: 2021-10-28 10:45
+  summary: much faster (~1 minute per epoch with batch size 4 compared to ~25 seconds)
+
+unet-london-full-pr-20-epochs-256-batch-size-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-london-full-pr-batch-size-test --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --lo-res $WORK/60km-2.2km-lin-london/numpy/rcp85/01/pr/day/pr.npy --hi-res $WORK/2.2km-london/numpy/rcp85/01/pr/day/pr.npy --model $WORK/checkpoints/$\{PBS_JOBID\} --epochs 20 --batch-size 256
+  job_id: 3769677
+  submitted: 2021-10-28 11:00
+  summary: About 35 seconds per batch. So 64 is probably about right (could try 32 and 128 but unlikely to save much time)
+
+unet-london-full-pr-20-epochs-1024-batch-size-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-london-full-pr-batch-size-test --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --lo-res $WORK/60km-2.2km-lin-london/numpy/rcp85/01/pr/day/pr.npy --hi-res $WORK/2.2km-london/numpy/rcp85/01/pr/day/pr.npy --model $WORK/checkpoints/$\{PBS_JOBID\} --epochs 20 --batch-size 1024
+  job_id: 3769679
+  submitted: 2021-10-28 11:00
+  summary: Fails to run - insufficient CUDA memory. 1024 probably too big (~226MiB per batch according to error message)
+
+unet-london-full-pr-200-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-london-full-pr --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --lo-res $WORK/60km-2.2km-lin-london/numpy/rcp85/01/pr/day/pr.npy --hi-res $WORK/2.2km-london/numpy/rcp85/01/pr/day/pr.npy --model $WORK/checkpoints/$\{PBS_JOBID\} --epochs 200  --batch-size 64
+  job_id:
+  submitted:
