@@ -8,13 +8,6 @@ import torch
 from torch.utils.data import random_split, DataLoader, TensorDataset
 
 import numpy as np
-import pandas as pd
-import xarray as xr
-
-# def dir_path(dir_arg):
-#     return Path(dir_arg)
-
-# type=dir_path
 
 def get_args():
     parser = argparse.ArgumentParser(description='Regrid GCM data to match the CPM data',
