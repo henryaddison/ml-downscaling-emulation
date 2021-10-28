@@ -23,6 +23,35 @@ def get_args():
 
     return parser.parse_args()
 
+def train_epoch(model, dataloader, device, epoch):
+    model.train()
+
+    epoch_loss = 0.0
+
+    for i, (batch_X, batch_y) in enumerate(dataloader):
+        loss = train_on_batch(batch_X.to(device), batch_y.to(device), model)
+        epoch_loss += loss.item()
+
+        # Log progress at least every 10th batch
+        if (len(dataloader) <= 10) or ((i+1) % max(len(dataloader)//10,1) == 0):
+            logging.info(f"Epoch {epoch}: Batch {i}: Batch Train Loss {loss.item()} Running Epoch Train Loss {epoch_loss}")
+
+    return epoch_loss
+
+def val_epoch(model, dataloader, device, epoch):
+    model.eval()
+
+    epoch_val_loss = 0
+    for batch_X, batch_y in dataloader:
+        val_loss = val_on_batch(batch_X.to(device), batch_y.to(device), model)
+
+        # Progress
+        epoch_val_loss += val_loss.item()
+
+    model.train()
+
+    return epoch_val_loss
+
 def train_on_batch(batch_X, batch_y, model):
     # Compute prediction and loss
     outputs_tensor = model(batch_X)
@@ -43,6 +72,23 @@ def val_on_batch(batch_X, batch_y, model):
 
     return loss
 
+def load_data(lores_files, hires_file):
+    unstacked_X = map(torch.tensor, map(np.load, lores_files))
+    X = torch.stack(list(unstacked_X), dim=1)
+
+    y = torch.tensor(np.load(hires_file)).unsqueeze(dim=1)
+
+    all_data = TensorDataset(X, y)
+
+    train_size = int(0.7 * len(all_data))
+    val_size = len(all_data) - train_size
+    train_set, val_set = random_split(all_data, [train_size, val_size])
+
+    train_dl = DataLoader(train_set, batch_size=args.batch_size)
+    val_dl = DataLoader(val_set, batch_size=args.batch_size)
+
+    return train_dl, val_dl
+
 if __name__ == '__main__':
     args = get_args()
 
@@ -56,21 +102,10 @@ if __name__ == '__main__':
     logging.info(f'Using device {device}')
 
     # Prep data loaders
-    unstacked_X = map(torch.tensor, map(np.load, args.lores_files))
-    X = torch.stack(list(unstacked_X), dim=1)
-    num_samples, num_predictors, _, _ = X.shape
-    y = torch.tensor(np.load(args.hires_file)).unsqueeze(dim=1)
-
-    all_data = TensorDataset(X, y)
-
-    train_size = int(0.7 * len(all_data))
-    val_size = len(all_data) - train_size
-    train_set, val_set = random_split(all_data, [train_size, val_size])
-
-    train_dl = DataLoader(train_set, batch_size=args.batch_size)
-    val_dl = DataLoader(val_set, batch_size=args.batch_size)
+    train_dl, val_dl = load_data(args.lores_files, args.hires_file)
 
     # Setup model, loss and optimiser
+    num_predictors, _, _ = train_dl.dataset.dataset[0][0].shape
     model = unet.UNet(num_predictors, 1).to(device=device)
 
     criterion = torch.nn.L1Loss(reduction='mean').to(device)
@@ -80,31 +115,12 @@ if __name__ == '__main__':
     # Fit model
     for epoch in range(args.epochs):
         # Update model based on training data
-        model.train()
-
-        epoch_loss = 0.0
-
-        for i, (batch_X, batch_y) in enumerate(train_dl):
-            loss = train_on_batch(batch_X.to(device), batch_y.to(device), model)
-
-            # Progress
-            epoch_loss += loss.item()
-            if (i+1) % (len(train_dl)//10) == 0:
-                logging.info(f"Epoch {epoch}: Batch {i} Loss {loss.item()} Running epoch loss{epoch_loss}")
+        epoch_train_loss = train_epoch(model, train_dl, device, epoch)
 
         # Compute validation loss
-        model.eval()
+        epoch_val_loss = val_epoch(model, val_dl, device, epoch)
 
-        epoch_val_loss = 0
-        for batch_X, batch_y in val_dl:
-            val_loss = val_on_batch(batch_X.to(device), batch_y.to(device), model)
-
-            # Progress
-            epoch_val_loss += val_loss.item()
-
-        model.train()
-
-        logging.info(f"Epoch {epoch}: Loss {epoch_loss} Val loss {epoch_val_loss}")
+        logging.info(f"Epoch {epoch}: Train Loss {epoch_train_loss} Val Loss {epoch_val_loss}")
 
         # Checkpoint model
         if (epoch % 10 == 0) or (epoch + 1 == args.epochs): # every 10th epoch or final one (to be safe)
