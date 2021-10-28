@@ -65,8 +65,8 @@ if __name__ == '__main__':
     val_size = len(all_data) - train_size
     train_set, val_set = random_split(all_data, [train_size, val_size])
 
-    train_dl = DataLoader(train_set, batch_size=4)
-    val_dl = DataLoader(val_set, batch_size=4)
+    train_dl = DataLoader(train_set, batch_size=args.batch_size)
+    val_dl = DataLoader(val_set, batch_size=args.batch_size)
 
     # Setup model, loss and optimiser
     model = unet.UNet(num_predictors, 1).to(device=device)
