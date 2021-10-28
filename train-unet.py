@@ -105,7 +105,7 @@ if __name__ == '__main__':
         logging.info(f"Epoch {epoch}: Loss {epoch_loss} Val loss {epoch_val_loss}")
 
         # Checkpoint model
-        if epoch % 10 == 0:
+        if (epoch % 10 == 0) or (epoch + 1 == args.epochs): # every 10th epoch or final one (to be safe)
             model_checkpoint_path = args.model_checkpoints_dir / f"model-epoch{epoch}.pth"
             torch.save(model, model_checkpoint_path)
             logging.info(f"Epoch {epoch}: Saved model to {model_checkpoint_path}")
