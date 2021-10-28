@@ -100,10 +100,12 @@ if __name__ == '__main__':
             # Progress
             epoch_val_loss += val_loss.item()
 
-        logging.info(f"Loss {epoch_loss} Val loss {epoch_val_loss}")
         model.train()
 
+        logging.info(f"Epoch {epoch}: Loss {epoch_loss} Val loss {epoch_val_loss}")
+
         # Checkpoint model
-        model_checkpoint_path = args.model_checkpoints_dir / f"model-epoch{epoch}.pth"
-        torch.save(model, model_checkpoint_path)
-        logging.info(f"Epoch {epoch}: Saved model to {model_checkpoint_path}")
+        if epoch % 10 == 0:
+            model_checkpoint_path = args.model_checkpoints_dir / f"model-epoch{epoch}.pth"
+            torch.save(model, model_checkpoint_path)
+            logging.info(f"Epoch {epoch}: Saved model to {model_checkpoint_path}")
