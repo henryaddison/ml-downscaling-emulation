@@ -48,6 +48,8 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.INFO, format='%(levelname)s %(asctime)s: %(message)s')
 
+    logging.info(f"Starting {os.path.basename(__file__)}")
+
     os.makedirs(args.model_checkpoints_dir, exist_ok=True)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -109,3 +111,5 @@ if __name__ == '__main__':
             model_checkpoint_path = args.model_checkpoints_dir / f"model-epoch{epoch}.pth"
             torch.save(model, model_checkpoint_path)
             logging.info(f"Epoch {epoch}: Saved model to {model_checkpoint_path}")
+
+    logging.info(f"Finished {os.path.basename(__file__)}")
