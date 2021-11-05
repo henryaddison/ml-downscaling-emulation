@@ -114,7 +114,7 @@ if __name__ == '__main__':
     model = unet.UNet(num_predictors, 1).to(device=device)
 
     if args.loss == 'l1':
-        criterion = torch.nn.L1Loss(reduction='mean').to(device)
+        criterion = torch.nn.L1Loss().to(device)
     elif args.loss == 'mse':
         criterion = torch.nn.MSELoss().to(device)
     else:
