@@ -77,7 +77,7 @@ def val_on_batch(batch_X, batch_y, model):
 
     return loss
 
-def load_data(lores_files, hires_file):
+def load_data(lores_files, hires_file, batch_size):
     unstacked_X = map(torch.tensor, map(np.load, lores_files))
     X = torch.stack(list(unstacked_X), dim=1)
 
@@ -89,8 +89,8 @@ def load_data(lores_files, hires_file):
     val_size = len(all_data) - train_size
     train_set, val_set = random_split(all_data, [train_size, val_size])
 
-    train_dl = DataLoader(train_set, batch_size=args.batch_size)
-    val_dl = DataLoader(val_set, batch_size=args.batch_size)
+    train_dl = DataLoader(train_set, batch_size=batch_size)
+    val_dl = DataLoader(val_set, batch_size=batch_size)
 
     return train_dl, val_dl
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     logging.info(f'Using device {device}')
 
     # Prep data loaders
-    train_dl, val_dl = load_data(args.lores_files, args.hires_file)
+    train_dl, val_dl = load_data(args.lores_files, args.hires_file, args.batch_size)
 
     # Setup model, loss and optimiser
     num_predictors, _, _ = train_dl.dataset.dataset[0][0].shape
