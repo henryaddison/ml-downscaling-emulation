@@ -9,6 +9,10 @@ from torch.utils.data import random_split, DataLoader, TensorDataset
 
 import numpy as np
 
+import wandb
+from mlflow import log_metric, log_param, log_artifacts, set_experiment, set_tags
+from torch.utils.tensorboard import SummaryWriter
+
 def get_args():
     parser = argparse.ArgumentParser(description='Train U-Net to downscale',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -116,7 +120,38 @@ if __name__ == '__main__':
     else:
         raise("Unkwown loss function")
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=2e-4)
+    learning_rate = 2e-4
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    config = dict(
+        dataset = args.lores_files,
+        optimizer = "Adam",
+        learning_rate = learning_rate,
+        batch_size = args.batch_size,
+        architecture = "U-Net",
+        device = device,
+        epochs=args.epochs
+    )
+
+    wandb.init(
+        project="ml-downscaling-emulator",
+        tags=["baseline", "U-Net"],
+        config=config
+    )
+
+    wandb.watch(model, criterion=criterion, log_freq=100)
+
+    set_experiment("ml-downscaling-emulator")
+    set_tags({"model": "U-Net", "purpose": "baseline"})
+    log_param("dataset", args.lores_files)
+    log_param("optimizer", "Adam")
+    log_param("learning_rate", learning_rate)
+    log_param("batch_size", args.batch_size)
+    log_param("architecture", "U-Net")
+    log_param("device", device)
+    log_param("epochs", args.epochs)
+
+    writer = SummaryWriter()
 
     # Fit model
     for epoch in range(args.epochs):
@@ -127,11 +162,17 @@ if __name__ == '__main__':
         epoch_val_loss = val_epoch(model, val_dl, device, epoch)
 
         logging.info(f"Epoch {epoch}: Train Loss {epoch_train_loss} Val Loss {epoch_val_loss}")
-
+        wandb.log({"train/loss": epoch_train_loss, "val/loss": epoch_val_loss})
+        log_metric("train/loss",epoch_train_loss, step=epoch)
+        log_metric("val/loss", epoch_val_loss, step=epoch)
+        writer.add_scalar("train/loss", epoch_train_loss, epoch)
+        writer.add_scalar("val/loss", epoch_val_loss, epoch)
         # Checkpoint model
         if (epoch % 10 == 0) or (epoch + 1 == args.epochs): # every 10th epoch or final one (to be safe)
             model_checkpoint_path = args.model_checkpoints_dir / f"model-epoch{epoch}.pth"
             torch.save(model, model_checkpoint_path)
             logging.info(f"Epoch {epoch}: Saved model to {model_checkpoint_path}")
 
+    # writer.add_hparams(config, {"train/loss": epoch_train_loss, "val/loss": epoch_val_loss})
+    writer.flush()
     logging.info(f"Finished {os.path.basename(__file__)}")
