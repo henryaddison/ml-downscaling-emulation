@@ -1,10 +1,9 @@
 import argparse
-import glob
 import logging
 import os
 from pathlib import Path
 
-import xarray as xr
+from preprocessing.select_subregion import SelectSubregion
 
 def get_args():
     parser = argparse.ArgumentParser(description='Select a sub-region of a UKCP18 file',
@@ -24,15 +23,6 @@ if __name__ == '__main__':
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    full_da_files = glob.glob(str(args.input_dir / "*.nc"))
+    outputs = SelectSubregion(args.input_dir, args.output_dir).run()
 
-    for full_file in full_da_files:
-        logging.info(f"Working on {full_file}")
-        da = xr.open_dataset(full_file)
-
-        output_file = args.output_dir / f"london_{os.path.basename(full_file)}"
-
-        subregion_da = da.isel(grid_latitude=range(139,199), grid_longitude=range(331, 391))
-        subregion_da.to_netcdf(output_file)
-
-    logging.info("All done")
+    logging.info(outputs)
