@@ -13,6 +13,10 @@ def get_args():
     parser.add_argument('--output', dest='output_dir', type=Path, required=True,
                         help='Base path to storage output')
 
+    subregion_defn_group = parser.add_mutually_exclusive_group()
+    subregion_defn_group.add_argument("--london", dest="subregion_defn" , action="store_const", const=SelectSubregion.LONDON_IN_CPM)
+    subregion_defn_group.add_argument("--london-gcm", dest="subregion_defn", action="store_const", const=SelectSubregion.LONDON_IN_GCM)
+
     return parser.parse_args()
 
 
@@ -23,6 +27,6 @@ if __name__ == '__main__':
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    outputs = SelectSubregion(args.input_dir, args.output_dir).run()
+    outputs = SelectSubregion(args.input_dir, args.output_dir, args.subregion_defn).run()
 
     logging.info(outputs)
