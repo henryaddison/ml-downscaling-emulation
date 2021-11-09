@@ -17,10 +17,8 @@ def get_args():
     parser = argparse.ArgumentParser(description='Train U-Net to downscale',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--loss', '-l', dest='loss', type=str, default='l1', help='Loss function')
-    parser.add_argument('--hi-res', dest='hires_file', type=Path, required=True,
-                        help='Path to file containing 2.2km data')
-    parser.add_argument('--lo-res', dest='lores_files', nargs='+', type=Path, required=True,
-                        help='Paths to (interpolated) 60km data files')
+    parser.add_argument('--data', dest='data_dir', type=Path, required=True,
+                        help='Path to directory of training and validation tensors')
     parser.add_argument('--model', dest='model_checkpoints_dir', type=Path, required=True,
                         help='Base path to storage for models')
     parser.add_argument('--epochs', '-e', metavar='E', type=int, default=5, help='Number of epochs')
@@ -77,17 +75,9 @@ def val_on_batch(batch_X, batch_y, model):
 
     return loss
 
-def load_data(lores_files, hires_file, batch_size):
-    unstacked_X = map(torch.tensor, map(np.load, lores_files))
-    X = torch.stack(list(unstacked_X), dim=1)
-
-    y = torch.tensor(np.load(hires_file)).unsqueeze(dim=1)
-
-    all_data = TensorDataset(X, y)
-
-    train_size = int(0.7 * len(all_data))
-    val_size = len(all_data) - train_size
-    train_set, val_set = random_split(all_data, [train_size, val_size])
+def load_data(data_dirpath, batch_size):
+    train_set = TensorDataset(torch.load(data_dirpath/'train_X.pt'), torch.load(data_dirpath/'train_y.pt'))
+    val_set = TensorDataset(torch.load(data_dirpath/'val_X.pt'), torch.load(data_dirpath/'val_y.pt'))
 
     train_dl = DataLoader(train_set, batch_size=batch_size)
     val_dl = DataLoader(val_set, batch_size=batch_size)
@@ -107,10 +97,10 @@ if __name__ == '__main__':
     logging.info(f'Using device {device}')
 
     # Prep data loaders
-    train_dl, val_dl = load_data(args.lores_files, args.hires_file, args.batch_size)
+    train_dl, val_dl = load_data(args.data_dir, args.batch_size)
 
     # Setup model, loss and optimiser
-    num_predictors, _, _ = train_dl.dataset.dataset[0][0].shape
+    num_predictors, _, _ = train_dl.dataset[0][0].shape
     model = unet.UNet(num_predictors, 1).to(device=device)
 
     if args.loss == 'l1':
@@ -124,7 +114,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     config = dict(
-        dataset = args.lores_files,
+        dataset = args.data_dir,
         optimizer = "Adam",
         learning_rate = learning_rate,
         batch_size = args.batch_size,
@@ -143,7 +133,7 @@ if __name__ == '__main__':
 
     set_experiment("ml-downscaling-emulator")
     set_tags({"model": "U-Net", "purpose": "baseline"})
-    log_param("dataset", args.lores_files)
+    log_param("dataset", args.data_dir)
     log_param("optimizer", "Adam")
     log_param("learning_rate", learning_rate)
     log_param("batch_size", args.batch_size)

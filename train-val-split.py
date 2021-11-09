@@ -1,0 +1,32 @@
+import argparse
+import logging
+import os
+from pathlib import Path
+
+from preprocessing.train_val_split import TrainValSplit
+
+def get_args():
+    parser = argparse.ArgumentParser(description='Select a sub-region of a UKCP18 file',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--hi-res', dest='hi_res_files', type=Path, nargs='+', required=True,
+                        help='List of hi res netcdf files')
+    parser.add_argument('--lo-res', dest='lo_res_files', type=Path, nargs='+', required=True,
+                        help='List of lo res netcdf files')
+    parser.add_argument('--output', dest='output_dir', type=Path, required=True,
+                        help='Base path to store output tensors')
+    parser.add_argument('--val-prop', dest='val_prop', type=float, required=False, default=0.3,
+                        help='Proportion of data to put in validation set')
+
+
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(levelname)s %(asctime)s: %(message)s')
+
+    args = get_args()
+
+    os.makedirs(os.path.dirname(args.output_dir), exist_ok=True)
+
+    TrainValSplit(args.hi_res_files, args.lo_res_files, args.output_dir, args.val_prop).run()
+
+    logging.info("All done")
