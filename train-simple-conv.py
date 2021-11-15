@@ -72,7 +72,8 @@ if __name__ == '__main__':
             log_epoch(epoch, epoch_metrics, wandb_run, tb_writer)
 
             # Checkpoint model
-            if (epoch % 10 == 0) or (epoch + 1 == args.epochs): # every 10th epoch or final one (to be safe)
+            # checkpoint the model about 10 times and the final one (to be safe)
+            if ((args.epochs//10) == 0) or (args.epochs > 10 and epoch % (args.epochs//10) == 0) or (epoch + 1 == args.epochs):
                 checkpoint_model(model, args.model_checkpoints_dir, epoch)
 
     logging.info(f"Finished {os.path.basename(__file__)}")
