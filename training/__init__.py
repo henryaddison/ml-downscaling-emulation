@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 def train(train_dl, val_dl, model, criterion, optimizer, epochs, device):
     for epoch in range(epochs):
-        with tqdm(total=train_dl.dataset.shape[0], desc=f'Epoch {epoch + 1}/{epochs}', unit='timesteps') as pbar:
+        with tqdm(total=len(train_dl), desc=f'Epoch {epoch + 1}/{epochs}', unit='timesteps') as pbar:
             # Update model based on training data
             epoch_train_loss = train_epoch(train_dl, model, criterion, optimizer, epoch, device, pbar)
 
@@ -26,13 +26,12 @@ def train_epoch(dataloader, model, criterion, optimizer, epoch, device, pbar):
 
     epoch_loss = 0.0
 
-    for i, (batch_X, batch_y) in enumerate(dataloader):
+    for (batch_X, batch_y) in dataloader:
         loss = train_on_batch(batch_X.to(device), batch_y.to(device), model, criterion, optimizer)
         epoch_loss += loss.item()
 
         # Log progress on batch
         pbar.update(batch_X.shape[0])
-        pbar.set_postfix(**{"train/loss": epoch_loss})
 
     return epoch_loss
 
