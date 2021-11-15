@@ -3,9 +3,10 @@ from torch.utils.data import random_split, DataLoader, TensorDataset
 import xarray as xr
 
 class TrainValSplit:
-    def __init__(self, lo_res_files, hi_res_files, output_dir, val_prop=0.3) -> None:
+    def __init__(self, lo_res_files, hi_res_files, output_dir, variables = ['pr'], val_prop=0.3) -> None:
         self.lo_res_files = lo_res_files
         self.hi_res_files = hi_res_files
+        self.variables = variables
         self.val_prop = val_prop
         self.output_dir = output_dir
 
@@ -15,8 +16,7 @@ class TrainValSplit:
 
         combined_dataset = xr.merge([gcm_dataset, cpm_dataset], join='inner')
 
-        variables = ('pr', 'psl')
-        unstacked_X = [torch.tensor(combined_dataset[variable].values) for variable in variables]
+        unstacked_X = [torch.tensor(combined_dataset[variable].values) for variable in self.variables]
 
         X = torch.stack(list(unstacked_X), dim=1)
         y = torch.tensor(combined_dataset['target_pr'].values).unsqueeze(dim=1)

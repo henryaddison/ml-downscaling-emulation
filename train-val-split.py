@@ -14,6 +14,8 @@ def get_args():
                         help='List of lo res netcdf files')
     parser.add_argument('--output', dest='output_dir', type=Path, required=True,
                         help='Base path to store output tensors')
+    parser.add_argument('--variables', dest='variables', type=str, nargs='+', required=False, default=['pr'],
+                        help='List of input variables to use to create datasets')
     parser.add_argument('--val-prop', dest='val_prop', type=float, required=False, default=0.3,
                         help='Proportion of data to put in validation set')
 
@@ -27,6 +29,6 @@ if __name__ == '__main__':
 
     os.makedirs(os.path.dirname(args.output_dir), exist_ok=True)
 
-    TrainValSplit(args.hi_res_files, args.lo_res_files, args.output_dir, args.val_prop).run()
+    TrainValSplit(args.hi_res_files, args.lo_res_files, args.output_dir, args.variables, args.val_prop).run()
 
     logging.info("All done")
