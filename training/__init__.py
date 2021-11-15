@@ -8,30 +8,31 @@ import mlflow
 from torch.utils.tensorboard import SummaryWriter
 import torch
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 def train(train_dl, val_dl, model, criterion, optimizer, epochs, device):
     for epoch in range(epochs):
-        with tqdm(total=len(train_dl), desc=f'Epoch {epoch + 1}/{epochs}', unit='timesteps') as pbar:
-            # Update model based on training data
-            epoch_train_loss = train_epoch(train_dl, model, criterion, optimizer, epoch, device, pbar)
+        # Update model based on training data
+        epoch_train_loss = train_epoch(train_dl, model, criterion, optimizer, epoch, device)
 
-            # Compute validation loss
-            epoch_val_loss = val_epoch(val_dl, model, criterion, epoch, device)
+        # Compute validation loss
+        epoch_val_loss = val_epoch(val_dl, model, criterion, epoch, device)
 
-            epoch_metrics = {"train/loss": epoch_train_loss, "val/loss": epoch_val_loss}
-            yield epoch, epoch_metrics
+        epoch_metrics = {"train/loss": epoch_train_loss, "val/loss": epoch_val_loss}
+        yield epoch, epoch_metrics
 
-def train_epoch(dataloader, model, criterion, optimizer, epoch, device, pbar):
+def train_epoch(dataloader, model, criterion, optimizer, epoch, device):
     model.train()
 
     epoch_loss = 0.0
+    with logging_redirect_tqdm():
+        with tqdm(total=len(dataloader), desc=f'Epoch {epoch}', unit=' timesteps') as pbar:
+            for (batch_X, batch_y) in dataloader:
+                loss = train_on_batch(batch_X.to(device), batch_y.to(device), model, criterion, optimizer)
+                epoch_loss += loss.item()
 
-    for (batch_X, batch_y) in dataloader:
-        loss = train_on_batch(batch_X.to(device), batch_y.to(device), model, criterion, optimizer)
-        epoch_loss += loss.item()
-
-        # Log progress on batch
-        pbar.update(batch_X.shape[0])
+                # Log progress so far on epoch
+                pbar.update(batch_X.shape[0])
 
     return epoch_loss
 
