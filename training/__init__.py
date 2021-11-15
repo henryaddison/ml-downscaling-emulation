@@ -7,19 +7,21 @@ import wandb
 import mlflow
 from torch.utils.tensorboard import SummaryWriter
 import torch
+from tqdm import tqdm
 
 def train(train_dl, val_dl, model, criterion, optimizer, epochs, device):
     for epoch in range(epochs):
-        # Update model based on training data
-        epoch_train_loss = train_epoch(train_dl, model, criterion, optimizer, epoch, device)
+        with tqdm(total=train_dl.dataset.shape[0], desc=f'Epoch {epoch + 1}/{epochs}', unit='timesteps') as pbar:
+            # Update model based on training data
+            epoch_train_loss = train_epoch(train_dl, model, criterion, optimizer, epoch, device, pbar)
 
-        # Compute validation loss
-        epoch_val_loss = val_epoch(val_dl, model, criterion, epoch, device)
+            # Compute validation loss
+            epoch_val_loss = val_epoch(val_dl, model, criterion, epoch, device)
 
-        epoch_metrics = {"train/loss": epoch_train_loss, "val/loss": epoch_val_loss}
-        yield epoch, epoch_metrics
+            epoch_metrics = {"train/loss": epoch_train_loss, "val/loss": epoch_val_loss}
+            yield epoch, epoch_metrics
 
-def train_epoch(dataloader, model, criterion, optimizer, epoch, device):
+def train_epoch(dataloader, model, criterion, optimizer, epoch, device, pbar):
     model.train()
 
     epoch_loss = 0.0
@@ -28,9 +30,9 @@ def train_epoch(dataloader, model, criterion, optimizer, epoch, device):
         loss = train_on_batch(batch_X.to(device), batch_y.to(device), model, criterion, optimizer)
         epoch_loss += loss.item()
 
-        # Log progress at least every 10th batch
-        if (len(dataloader) <= 10) or ((i+1) % max(len(dataloader)//10,1) == 0):
-            logging.info(f"Epoch {epoch}: Batch {i}: Batch Train Loss {loss.item()} Running Epoch Train Loss {epoch_loss}")
+        # Log progress on batch
+        pbar.update(batch_X.shape[0])
+        pbar.set_postfix(**{"train/loss": epoch_loss})
 
     return epoch_loss
 
@@ -93,6 +95,7 @@ def checkpoint_model(model, model_checkpoints_dir, epoch):
 @contextmanager
 def track_run(experiment_name, config, tags):
     with wandb.init(project=experiment_name, tags=tags, config=config) as wandb_run:
+
         mlflow.set_experiment(experiment_name)
         with mlflow.start_run() :
             mlflow.set_tags({ key: True for key in tags})
