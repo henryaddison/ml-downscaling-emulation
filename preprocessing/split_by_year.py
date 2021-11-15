@@ -30,7 +30,9 @@ class SplitByYear:
         output_files = []
 
         for year in self.years:
-            input = xarray.load_dataset(f"{self.input_filepath_prefix}_{self.gcm_file_year_range(year)}.nc")
+            input_filepath = f"{self.input_filepath_prefix}_{self.gcm_file_year_range(year)}.nc"
+            print(f"Opening {input_filepath}")
+            input = xarray.load_dataset(input_filepath)
             single_year_input = input.sel(time=slice(cftime.Datetime360Day(year, 12, 1, 12, 0, 0, 0) , cftime.Datetime360Day(year+1, 11, 30, 12, 0, 0, 0)))
 
             output_filepath = f"{self.output_filepath_prefix}_{year}1201-{year+1}1130.nc"
