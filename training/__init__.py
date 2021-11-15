@@ -1,4 +1,3 @@
-import argparse
 from contextlib import contextmanager
 import logging
 
@@ -6,7 +5,6 @@ from torch.utils.data import DataLoader, TensorDataset
 
 import wandb
 import mlflow
-from mlflow import log_metric, log_param, set_experiment, set_tags
 from torch.utils.tensorboard import SummaryWriter
 import torch
 
@@ -95,7 +93,7 @@ def checkpoint_model(model, model_checkpoints_dir, epoch):
 @contextmanager
 def track_run(experiment_name, config, tags):
     with wandb.init(project=experiment_name, tags=tags, config=config) as wandb_run:
-        set_experiment(experiment_name)
+        mlflow.set_experiment(experiment_name)
         with mlflow.start_run() :
             mlflow.set_tags({ key: True for key in tags})
             mlflow.log_params(config)
