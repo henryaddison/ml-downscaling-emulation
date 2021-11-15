@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
             # Checkpoint model
             # checkpoint the model about 10 times and the final one (to be safe)
-            if ((args.epochs//10) == 0) or (args.epochs > 10 and epoch % (args.epochs//10) == 0) or (epoch + 1 == args.epochs):
+            if (args.epochs <= 10) or (epoch % (args.epochs//10) == 0) or (epoch + 1 == args.epochs):
                 checkpoint_model(model, args.model_checkpoints_dir, epoch)
 
     logging.info(f"Finished {os.path.basename(__file__)}")
