@@ -151,6 +151,15 @@ unet-nn-london-pr-l1-2000-epochs-gpu:
     2000 --batch-size 64
   job_id: 19195
   submitted: 2021-11-16 11:00
+simple-conv-lin-london-rcp85-01-pr-day-l1-2000-epochs:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname
+    simple-conv-lin-london-rcp85-01-pr-day-l1-2000-epochs --workdir ~/code/ml-downscaling-emulation/
+    -- python train-simple-conv.py --data ${{WORK}}/pytorch-data/{args.dataset_name}
+    --loss l1 --epochs 2000 --batch-size 64 --model ${WORK}/checkpoints/simple-conv/$\{SLURM_JOB_ID\}
+  job_id: 'Submitted batch job 19272
+
+    '
+  submitted: 2021-11-16 11:57
 simple-conv-lin-london-pr-l1-2000-epochs-gpu:
   cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname
     simple-conv-lin-london-pr-l1-2000-epochs --workdir ~/code/ml-downscaling-emulation/
