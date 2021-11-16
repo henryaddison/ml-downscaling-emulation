@@ -34,7 +34,7 @@ queue_opts = {
     "-g": "1",
     "--queue": "cnu",
     "--condaenv": "cuda-downscaling",
-    "--job-name": jobname,
+    "--jobname": jobname,
     "--workdir": "~/code/ml-downscaling-emulation/"
 }
 
