@@ -52,13 +52,7 @@ experiments_log_filepath = 'experiments.yml'
 with open(experiments_log_filepath, 'r') as file:
     experiments = yaml.safe_load(file)
 
-experiments = [{key: value} for key, value in experiments.items()]
-
-experiments.append({jobname: {"cmd": " ".join(full_cmd), "job_id": job_id, "submitted": datetime.now().strftime('%Y-%m-%d %H:%M')}})
-
-experiments = sorted(experiments, key=lambda x: (not (("submitted" in list(x.values())[0] and list(x.values())[0]["submitted"] is not None)), list(x.values())[0]["submitted"]))
-
-experiments = {jobname: values for experiment in experiments for (jobname, values) in experiment.items()}
+experiments[jobname] = {"cmd": " ".join(full_cmd), "job_id": job_id, "submitted": datetime.now().strftime('%Y-%m-%d %H:%M')}
 
 with open(experiments_log_filepath, 'w') as file:
     yaml.dump(experiments, file, sort_keys=False)
