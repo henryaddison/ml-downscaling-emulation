@@ -76,3 +76,43 @@ unet-london-full-pr-psl-mse-2000-epochs-gpu:
   cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-london-full-pr-psl-mse-2000-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --loss mse --lo-res $WORK/60km-2.2km-lin-london/numpy/rcp85/01/pr/day/pr.npy $WORK/60km-2.2km-lin-london/numpy/rcp85/01/psl/day/psl.npy --hi-res $WORK/2.2km-london/numpy/rcp85/01/pr/day/pr.npy --model $WORK/checkpoints/$\{PBS_JOBID\} --epochs 2000 --batch-size 64
   job_id: 3801916
   sumitted: 2021-10-29 11:30
+
+simple-conv-nn-london-pr-mse-2000-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname simple-conv-nn-london-pr-mse-2000-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-simple-conv.py --data /user/work/vf20964/pytorch-data/nn-london-rcp85-01-pr-day/ --loss mse --model /user/work/vf20964/checkpoints/simple-conv/$\{SLURM_JOB_ID\} --epochs 2000 --batch-size 64
+  job_id: 19019
+  submitted: 2021-11-15 22:00
+
+simple-conv-nn-london-pr-l1-2000-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname simple-conv-nn-london-pr-l1-2000-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-simple-conv.py --data /user/work/vf20964/pytorch-data/nn-london-rcp85-01-pr-day/ --loss l1 --model /user/work/vf20964/checkpoints/simple-conv/$\{SLURM_JOB_ID\} --epochs 2000 --batch-size 64
+  job_id: 19183
+  submitted: 2021-11-16 10:45
+
+unet-nn-london-pr-mse-2000-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-nn-london-pr-mse-2000-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --data /user/work/vf20964/pytorch-data/nn-london-rcp85-01-pr-day/ --loss mse --model /user/work/vf20964/checkpoints/unet/$\{SLURM_JOB_ID\} --epochs 2000 --batch-size 64
+  job_id: 19184
+  submitted: 2021-11-16 10:45
+
+unet-nn-london-pr-l1-2000-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-nn-london-pr-l1-2000-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --data /user/work/vf20964/pytorch-data/nn-london-rcp85-01-pr-day/ --loss l1 --model /user/work/vf20964/checkpoints/unet/$\{SLURM_JOB_ID\} --epochs 2000 --batch-size 64
+  job_id: 19195
+  submitted: 2021-11-16 11:00
+
+simple-conv-lin-london-pr-mse-2000-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname simple-conv-lin-london-pr-mse-2000-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-simple-conv.py --data /user/work/vf20964/pytorch-data/lin-london-rcp85-01-pr-day/ --loss mse --model /user/work/vf20964/checkpoints/simple-conv/$\{SLURM_JOB_ID\} --epochs 2000 --batch-size 64
+  job_id:
+  submitted:
+
+simple-conv-lin-london-pr-l1-2000-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname simple-conv-lin-london-pr-l1-2000-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-simple-conv.py --data /user/work/vf20964/pytorch-data/lin-london-rcp85-01-pr-day/ --loss l1 --model /user/work/vf20964/checkpoints/simple-conv/$\{SLURM_JOB_ID\} --epochs 2000 --batch-size 64
+  job_id:
+  submitted:
+
+unet-lin-london-pr-mse-2000-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-lin-london-pr-mse-2000-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --data /user/work/vf20964/pytorch-data/lin-london-rcp85-01-pr-day/ --loss mse --model /user/work/vf20964/checkpoints/unet/$\{SLURM_JOB_ID\} --epochs 2000 --batch-size 64
+  job_id:
+  submitted:
+
+unet-lin-london-pr-l1-2000-epochs-gpu:
+  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname unet-lin-london-pr-l1-2000-epochs --workdir ~/code/ml-downscaling-emulation/ -- python train-unet.py --data /user/work/vf20964/pytorch-data/lin-london-rcp85-01-pr-day/ --loss l1 --model /user/work/vf20964/checkpoints/unet/$\{SLURM_JOB_ID\} --epochs 2000 --batch-size 64
+  job_id:
+  submitted:
