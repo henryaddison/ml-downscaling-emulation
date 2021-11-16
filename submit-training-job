@@ -20,7 +20,7 @@ jobname = f"{args.model_name}-{args.dataset_name}-{args.loss}-{args.epochs}-epoc
 
 train_basecmd = ["python", f"train-{args.model_name}.py"]
 train_opts = {
-    "--data": "${{WORK}}/pytorch-data/{args.dataset_name}",
+    "--data": f"${{WORK}}/pytorch-data/{args.dataset_name}",
     "--loss": args.loss,
     "--epochs": str(args.epochs),
     "--batch-size": "64",
