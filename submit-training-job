@@ -43,8 +43,10 @@ queue_cmd = queue_basecmd +  [arg for item in queue_opts.items() for arg in item
 
 full_cmd = queue_cmd + ["--"] + train_cmd
 
-job_id = subprocess.run(full_cmd, stdout=subprocess.PIPE).stdout.decode("utf8")
-
+output = subprocess.run(full_cmd, stdout=subprocess.PIPE)
+job_id = output.stdout.decode("utf8")
+print(job_id)
+print(output.stderr.decode("utf8"))
 experiments_log_filepath = 'experiments.yml'
 
 with open(experiments_log_filepath, 'r') as file:
