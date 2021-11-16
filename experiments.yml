@@ -160,35 +160,3 @@ simple-conv-lin-london-rcp85-01-pr-day-l1-2000-epochs:
 
     '
   submitted: 2021-11-16 14:26
-simple-conv-lin-london-pr-l1-2000-epochs-gpu:
-  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname
-    simple-conv-lin-london-pr-l1-2000-epochs --workdir ~/code/ml-downscaling-emulation/
-    -- python train-simple-conv.py --data /user/work/vf20964/pytorch-data/lin-london-rcp85-01-pr-day/
-    --loss l1 --model /user/work/vf20964/checkpoints/simple-conv/$\{SLURM_JOB_ID\}
-    --epochs 2000 --batch-size 64
-  job_id: null
-  submitted: null
-simple-conv-lin-london-pr-mse-2000-epochs-gpu:
-  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname
-    simple-conv-lin-london-pr-mse-2000-epochs --workdir ~/code/ml-downscaling-emulation/
-    -- python train-simple-conv.py --data /user/work/vf20964/pytorch-data/lin-london-rcp85-01-pr-day/
-    --loss mse --model /user/work/vf20964/checkpoints/simple-conv/$\{SLURM_JOB_ID\}
-    --epochs 2000 --batch-size 64
-  job_id: null
-  submitted: null
-unet-lin-london-pr-l1-2000-epochs-gpu:
-  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname
-    unet-lin-london-pr-l1-2000-epochs --workdir ~/code/ml-downscaling-emulation/ --
-    python train-unet.py --data /user/work/vf20964/pytorch-data/lin-london-rcp85-01-pr-day/
-    --loss l1 --model /user/work/vf20964/checkpoints/unet/$\{SLURM_JOB_ID\} --epochs
-    2000 --batch-size 64
-  job_id: null
-  submitted: null
-unet-lin-london-pr-mse-2000-epochs-gpu:
-  cmd: lsub_nonblock -m 16 -g 1 --queue cnu --condaenv cuda-downscaling --jobname
-    unet-lin-london-pr-mse-2000-epochs --workdir ~/code/ml-downscaling-emulation/
-    -- python train-unet.py --data /user/work/vf20964/pytorch-data/lin-london-rcp85-01-pr-day/
-    --loss mse --model /user/work/vf20964/checkpoints/unet/$\{SLURM_JOB_ID\} --epochs
-    2000 --batch-size 64
-  job_id: null
-  submitted: null
