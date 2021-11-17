@@ -2,7 +2,7 @@ import glob
 import logging
 import os
 
-import iris
+import iris.analysis
 import xarray as xr
 
 logger = logging.getLogger(__name__)
