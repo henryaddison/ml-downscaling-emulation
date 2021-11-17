@@ -6,6 +6,7 @@ channels:
 dependencies:
   - _libgcc_mutex=0.1=main
   - _openmp_mutex=4.5=1_gnu
+  - absl-py=0.13.0=py39h06a4308_0
   - antlr-python-runtime=4.7.2=py39hf3d152e_1002
   - anyio=2.2.0=py39h06a4308_1
   - argon2-cffi=20.1.0=py39h27cfd23_1
@@ -15,26 +16,32 @@ dependencies:
   - backcall=0.2.0=pyhd3eb1b0_0
   - blas=1.0=mkl
   - bleach=3.3.0=pyhd3eb1b0_0
+  - blinker=1.4=py39h06a4308_0
   - bokeh=2.3.2=py39hf3d152e_0
   - bottleneck=1.3.2=py39hce5d2b2_3
   - brotlipy=0.7.0=py39h27cfd23_1003
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2021.5.30=ha878542_0
+  - c-ares=1.17.1=h27cfd23_0
+  - ca-certificates=2021.10.26=h06a4308_2
+  - cachetools=4.2.2=pyhd3eb1b0_0
   - cartopy=0.19.0.post1=py39h3b23250_0
-  - certifi=2021.5.30=py39hf3d152e_0
+  - certifi=2021.10.8=py39h06a4308_0
   - cf-units=2.1.5=py39hce5d2b2_0
   - cffi=1.14.5=py39h261ae71_0
   - cftime=1.2.1=py39h1dff97c_1
   - chardet=4.0.0=py39h06a4308_1003
   - click=8.0.1=py39hf3d152e_0
   - cloudpickle=1.6.0=py_0
+  - coverage=5.5=py39h27cfd23_2
   - cpuonly=1.0=0
   - cryptography=3.4.7=py39hd23ed53_0
   - curl=7.71.1=hbc83047_1
   - cycler=0.10.0=py39h06a4308_0
+  - cython=0.29.24=py39hdbfa776_0
   - cytoolz=0.11.0=py39h3811e60_3
   - dask=2021.6.1=pyhd8ed1ab_0
   - dask-core=2021.6.1=pyhd8ed1ab_0
+  - dataclasses=0.8=pyh6d0b6a4_7
   - dbus=1.13.18=hb2f20db_0
   - decorator=5.0.9=pyhd3eb1b0_0
   - defusedxml=0.7.1=pyhd3eb1b0_0
@@ -49,6 +56,9 @@ dependencies:
   - glib=2.68.2=h36276a3_0
   - gmp=6.2.1=h2531618_2
   - gnutls=3.6.15=he1e5248_0
+  - google-auth=1.21.3=py_0
+  - google-auth-oauthlib=0.4.1=py_2
+  - grpcio=1.36.1=py39h2157cd5_1
   - gst-plugins-base=1.14.0=h8213a91_2
   - gstreamer=1.14.0=h28cd5cc_2
   - hdf4=4.2.13=h3ca952b_2
@@ -96,6 +106,7 @@ dependencies:
   - libidn2=2.3.1=h27cfd23_0
   - libnetcdf=4.6.1=h2053bdc_3
   - libpng=1.6.37=hbc83047_0
+  - libprotobuf=3.17.2=h4ff587b_1
   - libsodium=1.0.18=h7b6447c_0
   - libssh2=1.9.0=h1ba5d50_1
   - libstdcxx-ng=9.3.0=hd4cf53a_17
@@ -109,6 +120,7 @@ dependencies:
   - libxml2=2.9.10=hb55368b_3
   - locket=0.2.0=py_2
   - lz4-c=1.9.3=h2531618_0
+  - markdown=3.3.4=py39h06a4308_0
   - markupsafe=2.0.1=py39h27cfd23_0
   - matplotlib=3.3.4=py39h06a4308_0
   - matplotlib-base=3.3.4=py39h62a2d02_0
@@ -132,9 +144,10 @@ dependencies:
   - numexpr=2.7.3=py39h22e1b3c_1
   - numpy=1.20.2=py39h2d18471_0
   - numpy-base=1.20.2=py39hfae3a4d_0
+  - oauthlib=3.1.1=pyhd3eb1b0_0
   - olefile=0.46=py_0
   - openh264=2.1.0=hd408876_0
-  - openssl=1.1.1k=h7f98852_0
+  - openssl=1.1.1l=h7f8727e_0
   - packaging=20.9=pyhd3eb1b0_0
   - pandas=1.2.5=py39h295c915_0
   - pandoc=2.12=h06a4308_0
@@ -151,10 +164,14 @@ dependencies:
   - prometheus_client=0.11.0=pyhd3eb1b0_0
   - prompt-toolkit=3.0.17=pyh06a4308_0
   - prompt_toolkit=3.0.17=hd3eb1b0_0
+  - protobuf=3.17.2=py39h295c915_0
   - psutil=5.8.0=py39h3811e60_1
   - ptyprocess=0.7.0=pyhd3eb1b0_2
+  - pyasn1=0.4.8=pyhd3eb1b0_0
+  - pyasn1-modules=0.2.8=py_0
   - pycparser=2.20=py_2
   - pygments=2.9.0=pyhd3eb1b0_0
+  - pyjwt=2.1.0=py39h06a4308_0
   - pyke=1.1.1=pyhd8ed1ab_1004
   - pyopenssl=20.0.1=pyhd3eb1b0_1
   - pyparsing=2.4.7=pyhd3eb1b0_0
@@ -175,6 +192,8 @@ dependencies:
   - qtpy=1.9.0=py_0
   - readline=8.1=h27cfd23_0
   - requests=2.25.1=pyhd3eb1b0_0
+  - requests-oauthlib=1.3.0=py_0
+  - rsa=4.7.2=pyhd3eb1b0_1
   - scipy=1.6.2=py39had2a1c9_1
   - seaborn=0.11.1=pyhd3eb1b0_0
   - send2trash=1.5.0=pyhd3eb1b0_1
@@ -187,6 +206,9 @@ dependencies:
   - sqlite=3.35.4=hdfb4753_0
   - statsmodels=0.12.2=py39h27cfd23_0
   - tblib=1.7.0=pyhd8ed1ab_0
+  - tensorboard=2.6.0=py_1
+  - tensorboard-data-server=0.6.0=py39hca6d32c_0
+  - tensorboard-plugin-wit=1.6.0=py_0
   - terminado=0.9.4=py39h06a4308_0
   - testpath=0.4.4=pyhd3eb1b0_0
   - tk=8.6.10=hbc83047_0
@@ -201,6 +223,7 @@ dependencies:
   - urllib3=1.26.4=pyhd3eb1b0_0
   - wcwidth=0.2.5=py_0
   - webencodings=0.5.1=py39h06a4308_1
+  - werkzeug=2.0.2=pyhd3eb1b0_0
   - wheel=0.36.2=pyhd3eb1b0_0
   - widgetsnbextension=3.5.1=py39h06a4308_0
   - xarray=0.18.2=pyhd8ed1ab_0
@@ -215,7 +238,5 @@ dependencies:
   - pip:
     - contrailonlinecaclient==0.5.1
     - jsmin==2.2.2
-    - oauthlib==3.1.1
     - pysteps==1.4.1
-    - requests-oauthlib==1.3.0
 prefix: /user/home/vf20964/.conda/envs/downscaling
