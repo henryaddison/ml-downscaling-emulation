@@ -57,9 +57,10 @@ if __name__ == '__main__':
 
     run_config = dict(
         dataset = args.data_dir,
-        optimizer = "Adam",
-        learning_rate = args.learning_rate,
-        batch_size = args.batch_size,
+        optimizer =  optimizer.__class__.__name__,
+        loss = criterion.__class__.__name__,
+        learning_rate = optimizer.learning_rate,
+        batch_size = train_dl.batch_size,
         architecture = ARCHITECTURE,
         device = device,
         epochs=args.epochs
