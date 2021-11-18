@@ -87,7 +87,9 @@ if __name__ == '__main__':
         device = device
     )
 
-    with track_run(EXPERIMENT_NAME, run_config, TAGS[args.arch]) as (wandb_run, tb_writer):
+    run_name = f"{args.arch}-{os.path.basename(args.data_dir)}-{args.loss}-{args.epochs}"
+
+    with track_run(EXPERIMENT_NAME, run_name, run_config, TAGS[args.arch]) as (wandb_run, tb_writer):
         # Fit model
         wandb_run.watch(model, criterion=criterion, log_freq=100)
         for (epoch, epoch_metrics) in train(train_dl, val_dl, model, criterion, optimizer, args.epochs, device):

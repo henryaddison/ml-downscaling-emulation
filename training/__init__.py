@@ -93,11 +93,11 @@ def checkpoint_model(model, model_checkpoints_dir, epoch):
     logging.info(f"Epoch {epoch}: Saved model to {model_checkpoint_path}")
 
 @contextmanager
-def track_run(experiment_name, config, tags):
-    with wandb.init(project=experiment_name, tags=tags, config=config) as wandb_run:
+def track_run(experiment_name, run_name, config, tags):
+    with wandb.init(project=experiment_name, name=run_name, tags=tags, config=config) as wandb_run:
 
         mlflow.set_experiment(experiment_name)
-        with mlflow.start_run() :
+        with mlflow.start_run(run_name=run_name) :
             mlflow.set_tags({ key: True for key in tags})
             mlflow.log_params(config)
 
