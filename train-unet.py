@@ -60,13 +60,14 @@ if __name__ == '__main__':
 
     run_config = dict(
         dataset = args.data_dir,
-        optimizer =  optimizer.__class__.__name__,
-        loss = criterion.__class__.__name__,
-        learning_rate = optimizer.learning_rate,
         batch_size = train_dl.batch_size,
-        architecture = ARCHITECTURE,
-        device = device,
-        epochs=args.epochs
+        epochs=args.epochs,
+        architecture = args.arch,
+        model_opts = {},
+        loss = criterion.__class__.__name__,
+        optimizer =  optimizer.__class__.__name__,
+        optimizer_config = optimizer.defaults,
+        device = device
     )
 
     with track_run(EXPERIMENT_NAME, run_config, TAGS) as (wandb_run, tb_writer):
