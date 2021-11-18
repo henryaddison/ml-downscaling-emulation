@@ -26,7 +26,7 @@ def train_epoch(dataloader, model, criterion, optimizer, epoch, device):
 
     epoch_loss = 0.0
     with logging_redirect_tqdm():
-        with tqdm(total=len(dataloader), desc=f'Epoch {epoch}', unit=' timesteps') as pbar:
+        with tqdm(total=len(dataloader.dataset), desc=f'Epoch {epoch}', unit=' timesteps') as pbar:
             for (batch_X, batch_y) in dataloader:
                 loss = train_on_batch(batch_X.to(device), batch_y.to(device), model, criterion, optimizer)
                 epoch_loss += loss.item()
