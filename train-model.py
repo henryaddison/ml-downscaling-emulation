@@ -13,8 +13,8 @@ import unet
 
 from training import train, load_data, log_epoch, track_run, checkpoint_model
 
-UNET_ARCHNAME = "U-Net"
-SIMPLE_CONV_ARCHNAME = "Simple conv"
+UNET_ARCHNAME = "u-net"
+SIMPLE_CONV_ARCHNAME = "simple-conv"
 EXPERIMENT_NAME="ml-downscaling-emulator"
 TAGS = {
     UNET_ARCHNAME: ["baseline", UNET_ARCHNAME],
