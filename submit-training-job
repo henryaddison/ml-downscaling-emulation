@@ -18,8 +18,9 @@ args = parser.parse_args()
 
 jobname = f"{args.model_name}-{args.dataset_name}-{args.loss}-{args.epochs}-epochs"
 
-train_basecmd = ["python", f"train-{args.model_name}.py"]
+train_basecmd = ["python", f"train-model.py"]
 train_opts = {
+    "--arch": args.model_name,
     "--data": f"${{WORK}}/pytorch-data/{args.dataset_name}",
     "--loss": args.loss,
     "--epochs": str(args.epochs),

@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 
 import torch
+import torch.nn as nn
 dir2 = os.path.abspath('unet/unet')
 dir1 = os.path.dirname(dir2)
 if not dir1 in sys.path: sys.path.append(dir1)
@@ -12,13 +13,22 @@ import unet
 
 from training import train, load_data, log_epoch, track_run, checkpoint_model
 
-ARCHITECTURE="U-Net"
+UNET_ARCHNAME = "U-Net"
+SIMPLE_CONV_ARCHNAME = "Simple conv"
 EXPERIMENT_NAME="ml-downscaling-emulator"
-TAGS = ["baseline", ARCHITECTURE]
+TAGS = {
+    UNET_ARCHNAME: ["baseline", UNET_ARCHNAME],
+    SIMPLE_CONV_ARCHNAME: ["baseline", SIMPLE_CONV_ARCHNAME, "debug"]
+}
 
 def get_args():
-    parser = argparse.ArgumentParser(description=f'Train {ARCHITECTURE} to downscale',
+    parser = argparse.ArgumentParser(description=f'Train a downscaling model',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    arch_group = parser.add_mutually_exclusive_group()
+    arch_group.add_argument("--unet", dest="arch" , action="store_const", const=UNET_ARCHNAME, help='U-Net model architecture')
+    arch_group.add_argument("--simple-conv", dest="arch", action="store_const", const=SIMPLE_CONV_ARCHNAME, help='Simple conv model architecture')
+    arch_group.add_argument('--architecture', '-a', dest='arch', type=str, choices=[UNET_ARCHNAME, SIMPLE_CONV_ARCHNAME], help='Model architecture')
+
     parser.add_argument('--loss', '-l', dest='loss', type=str, default='l1', help='Loss function')
     parser.add_argument('--data', dest='data_dir', type=Path, required=True,
                         help='Path to directory of training and validation tensors')
@@ -47,7 +57,14 @@ if __name__ == '__main__':
 
     # Setup model, loss and optimiser
     num_predictors, _, _ = train_dl.dataset[0][0].shape
-    model = unet.UNet(num_predictors, 1).to(device=device)
+    if args.arch == UNET_ARCHNAME:
+        model_opts = {}
+        model = unet.UNet(num_predictors, 1).to(device=device)
+    elif args.arch == SIMPLE_CONV_ARCHNAME:
+        model_opts = dict(kernel_size=31, padding=15)
+        model = nn.Conv2d(num_predictors, 1, **model_opts).to(device=device)
+    else:
+        raise("Unknown architecture")
 
     if args.loss == 'l1':
         criterion = torch.nn.L1Loss().to(device)
@@ -63,14 +80,14 @@ if __name__ == '__main__':
         batch_size = train_dl.batch_size,
         epochs=args.epochs,
         architecture = args.arch,
-        model_opts = {},
+        model_opts = model_opts,
         loss = criterion.__class__.__name__,
         optimizer =  optimizer.__class__.__name__,
         optimizer_config = optimizer.defaults,
         device = device
     )
 
-    with track_run(EXPERIMENT_NAME, run_config, TAGS) as (wandb_run, tb_writer):
+    with track_run(EXPERIMENT_NAME, run_config, TAGS[args.arch]) as (wandb_run, tb_writer):
         # Fit model
         wandb_run.watch(model, criterion=criterion, log_freq=100)
         for (epoch, epoch_metrics) in train(train_dl, val_dl, model, criterion, optimizer, args.epochs, device):
