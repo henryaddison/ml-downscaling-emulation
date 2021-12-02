@@ -12,7 +12,7 @@ class XRDataset(Dataset):
         return len(self.ds.time)
 
     def __getitem__(self, idx):
-        subds = self.ds.isel(time=idx, ensemble_member=0)
+        subds = self.ds.isel(time=idx)
 
         X = torch.tensor(np.stack([subds[var].values for var in self.variables], axis=0))
         y = torch.tensor(np.stack([subds["target_pr"].values], axis=0))
