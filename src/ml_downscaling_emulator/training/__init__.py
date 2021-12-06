@@ -73,10 +73,8 @@ def val_on_batch(batch_X, batch_y, model, criterion):
     return loss
 
 def load_data(data_dirpath, batch_size):
-    # train_set = XRDataset(xr.load_dataset(data_dirpath/'train.nc'), ['pr'])
-    # val_set = XRDataset(xr.load_dataset(data_dirpath/'val.nc'), ['pr'])
-    train_set = TensorDataset(torch.load(data_dirpath/'train_X.pt'), torch.load(data_dirpath/'train_y.pt'))
-    val_set = TensorDataset(torch.load(data_dirpath/'val_X.pt'), torch.load(data_dirpath/'val_y.pt'))
+    train_set = XRDataset(xr.load_dataset(data_dirpath/'train.nc'), ['pr'])
+    val_set = XRDataset(xr.load_dataset(data_dirpath/'val.nc'), ['pr'])
 
     train_dl = DataLoader(train_set, batch_size=batch_size)
     val_dl = DataLoader(val_set, batch_size=batch_size)
