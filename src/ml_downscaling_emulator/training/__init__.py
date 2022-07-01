@@ -1,16 +1,14 @@
 from contextlib import contextmanager
 import logging
+import os
 
 from torch.utils.data import DataLoader, TensorDataset
-
-import wandb
-import mlflow
-from torch.utils.tensorboard import SummaryWriter
 import torch
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 import xarray as xr
-from ml_downscaling_emulator.training.dataset import XRDataset
+import yaml
+from .dataset import CropT, Standardize, UnitRangeT, ClipT, SqrtT, ComposeT, XRDataset
 
 def train(train_dl, val_dl, model, criterion, optimizer, epochs, device):
     for epoch in range(epochs):
@@ -72,16 +70,40 @@ def val_on_batch(batch_X, batch_y, model, criterion):
 
     return loss
 
-def load_data(data_dirpath, batch_size):
-    train_set = XRDataset(xr.load_dataset(data_dirpath/'train.nc'), ['pr'])
-    val_set = XRDataset(xr.load_dataset(data_dirpath/'val.nc'), ['pr'])
+def load_data(data_dirpath, batch_size, eval_split='val'):
+    with open(os.path.join(data_dirpath, 'ds-config.yml'), 'r') as f:
+        ds_config = yaml.safe_load(f)
+    variables = [ pred_meta["variable"] for pred_meta in ds_config["predictors"] ]
+    target_variables = ["target_pr"]
 
-    train_dl = DataLoader(train_set, batch_size=batch_size)
-    val_dl = DataLoader(val_set, batch_size=batch_size)
+    xr_data_train = xr.load_dataset(os.path.join(data_dirpath, 'train.nc'))
 
-    return train_dl, val_dl
+    transform = ComposeT([
+        CropT(32),
+        Standardize(variables),
+        UnitRangeT(variables)])
+    target_transform = ComposeT([
+        SqrtT(target_variables),
+        ClipT(target_variables),
+        UnitRangeT(target_variables),
+    ])
+    xr_data_train = transform.fit_transform(xr_data_train)
+    xr_data_train = target_transform.fit_transform(xr_data_train)
+
+    xr_data_eval = xr.load_dataset(os.path.join(data_dirpath, f'{eval_split}.nc'))
+    xr_data_eval = transform.transform(xr_data_eval)
+    xr_data_eval = target_transform.transform(xr_data_eval)
+
+    train_dataset = XRDataset(xr_data_train, variables)
+    eval_dataset = XRDataset(xr_data_eval, variables)
+
+    train_data_loader = DataLoader(train_dataset, batch_size=batch_size)
+    eval_data_loader = DataLoader(eval_dataset, batch_size=batch_size)
+
+    return train_data_loader, eval_data_loader
 
 def log_epoch(epoch, epoch_metrics, wandb_run, tb_writer):
+    import mlflow
     logging.info(f"Epoch {epoch}: Train Loss {epoch_metrics['train/loss']} Val Loss {epoch_metrics['val/loss']}")
 
     wandb_run.log(epoch_metrics)
@@ -96,6 +118,9 @@ def checkpoint_model(model, model_checkpoints_dir, epoch):
 
 @contextmanager
 def track_run(experiment_name, run_name, config, tags):
+    import wandb
+    import mlflow
+    from torch.utils.tensorboard import SummaryWriter
     with wandb.init(project=experiment_name, name=run_name, tags=tags, config=config) as wandb_run:
 
         mlflow.set_experiment(experiment_name)
