@@ -70,12 +70,16 @@ def val_on_batch(batch_X, batch_y, model, criterion):
 
     return loss
 
-def load_data(data_dirpath, batch_size, eval_split='val'):
+def get_variables(data_dirpath):
     with open(os.path.join(data_dirpath, 'ds-config.yml'), 'r') as f:
         ds_config = yaml.safe_load(f)
     variables = [ pred_meta["variable"] for pred_meta in ds_config["predictors"] ]
     target_variables = ["target_pr"]
 
+    return variables, target_variables
+
+def get_transform(data_dirpath):
+    variables, target_variables = get_variables(data_dirpath)
     xr_data_train = xr.load_dataset(os.path.join(data_dirpath, 'train.nc'))
 
     transform = ComposeT([
@@ -89,6 +93,13 @@ def load_data(data_dirpath, batch_size, eval_split='val'):
     ])
     xr_data_train = transform.fit_transform(xr_data_train)
     xr_data_train = target_transform.fit_transform(xr_data_train)
+
+    return transform, target_transform, xr_data_train
+
+def load_data(data_dirpath, batch_size, eval_split='val'):
+    variables, target_variables = get_variables(data_dirpath)
+
+    transform, target_transform, xr_data_train = get_transform(data_dirpath)
 
     xr_data_eval = xr.load_dataset(os.path.join(data_dirpath, f'{eval_split}.nc'))
     xr_data_eval = transform.transform(xr_data_eval)
