@@ -9,4 +9,4 @@ def plot_grid(da, ax, title="", norm=matplotlib.colors.LogNorm(), cmap='Blues', 
     da.plot.pcolormesh(ax=ax, norm=norm, add_colorbar=add_colorbar, cmap=cmap, **kwargs)
     ax.set_title(title, fontsize=16)
     ax.coastlines()
-    ax.gridlines(draw_labels={"bottom": "x", "left": "y"}, x_inline=False, y_inline=False, xlabel_style=dict(fontsize=12), ylabel_style=dict(fontsize=12))
+    ax.gridlines(draw_labels={"bottom": "x", "left": "y"}, x_inline=False, y_inline=False, xlabel_style=dict(fontsize=24), ylabel_style=dict(fontsize=24))
