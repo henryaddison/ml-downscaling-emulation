@@ -42,7 +42,7 @@ def open_samples_ds(run_name, checkpoint_id, dataset_name, split):
 def show_samples(ds, timestamps, vmin, vmax):
     num_predictions = len(ds["sample_id"])
 
-    num_plots_per_ts = num_predictions+1 # plot each sample and true target pr
+    num_plots_per_ts = len(ds["source"])*num_predictions+1 # plot each sample and true target pr
 
     for (i, ts) in enumerate(timestamps):
         if i % 3 == 0:
@@ -59,9 +59,10 @@ def show_samples(ds, timestamps, vmin, vmax):
         ax = axes[0]
         plot_grid(ds.sel(time=ts)["target_pr"], ax, title=f"Target pr {ts}", cmap=precip_cmap, norm=precip_norm, add_colorbar=False)
 
-        for sample_id in ds["sample_id"].values:
-            ax = axes[1+sample_id]
-            plot_grid(ds.sel(time=ts, sample_id=sample_id)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title="Sample pr")
+        for source_idx, source in enumerate(ds["source"].values):
+            for sample_id in ds.isel(source=0)["sample_id"].values:
+                ax = axes[1+(source_idx*num_predictions)+sample_id]
+                plot_grid(ds.sel(source=source, time=ts, sample_id=sample_id)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title=f"{source} Sample pr")
 
         plt.show()
 
