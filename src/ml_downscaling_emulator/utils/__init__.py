@@ -4,6 +4,7 @@ import cartopy.crs as ccrs
 import matplotlib
 import matplotlib.pyplot as plt
 import metpy.plots.ctables
+import numpy as np
 import xarray as xr
 
 cp_model_rotated_pole = ccrs.RotatedPole(pole_longitude=177.5, pole_latitude=37.5)
@@ -67,11 +68,14 @@ def show_samples(ds, timestamps, vmin, vmax):
         plt.show()
 
 def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, figtitle):
-
     fig, axes = plt.subplot_mosaic([["Density"]], figsize=(20, 10), constrained_layout=True)
     ax = axes["Density"]
-    _, bins, _ = pred_pr.plot.hist(ax=ax, bins=50, density=True,alpha=0.75, color="red", label="Samples", log=True)
-    target_pr.plot.hist(ax=ax, bins=bins, density=True,alpha=1, color="black", histtype="step", label="Target", log=True, linewidth=3, linestyle="-")
+
+    hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
+    _, bins, _ = target_pr.plot.hist(ax=ax, bins=50, density=True,alpha=1, label="Target", log=True, range=hrange)
+    for source in pred_pr["source"].values:
+        pred_pr.sel(source=source).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{source} Samples", log=True, range=hrange, linewidth=3, linestyle="-")
+
     ax.set_title("Log density plot of samples and target precipitation", fontsize=24)
     ax.set_xlabel("Precip (mm day-1)", fontsize=16)
     ax.tick_params(axis='both', which='major', labelsize=16)
@@ -141,9 +145,12 @@ def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, fi
     fig, axes = plt.subplot_mosaic([["Quantiles"]], figsize=(20, 10), constrained_layout=True)
     ax = axes["Quantiles"]
     target_quantiles = target_pr.quantile(quantiles)
-    pred_quantiles = pred_pr.chunk(dict(sample_id=-1)).quantile(quantiles)
-    ideal_tr = max(np.max(target_quantiles), np.max(pred_quantiles))
-    ax.scatter(target_quantiles, pred_quantiles, label="Computed")
+    for source in pred_pr["source"].values:
+        pred_quantiles = pred_pr.sel(source=source).chunk(dict(sample_id=-1)).quantile(quantiles)
+        ax.scatter(target_quantiles, pred_quantiles, label=source)
+
+    ideal_tr = max(target_pr.max().values, pred_pr.max().values)
+
     ax.plot([0,ideal_tr], [0,ideal_tr], color="orange", linestyle="--", label="Ideal")
     ax.set_xlabel("Target pr (mm day-1)", fontsize=16)
     ax.set_ylabel("Sample pr (mm day-1", fontsize=16)
