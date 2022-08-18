@@ -1,3 +1,4 @@
+import glob
 import os
 
 import cartopy.crs as ccrs
@@ -37,8 +38,11 @@ def plot_grid(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
     ax.gridlines(draw_labels={"bottom": "x", "left": "y"}, x_inline=False, y_inline=False, xlabel_style=dict(fontsize=24), ylabel_style=dict(fontsize=24))
 
 def open_samples_ds(run_name, checkpoint_id, dataset_name, split):
-    filepaths = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/checkpoint-{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
-    return xr.open_mfdataset(filepaths)
+    samples_filepath_pattern = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/checkpoint-{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
+    sample_ds_list = [ xr.open_dataset(sample_filepath) for sample_filepath in glob.glob(samples_filepath_pattern) ]
+    # concatenate the samples along a new dimension
+    ds = xr.concat(sample_ds_list, dim="sample_id")
+    return ds
 
 def show_samples(ds, timestamps, vmin, vmax):
     num_predictions = len(ds["sample_id"])
