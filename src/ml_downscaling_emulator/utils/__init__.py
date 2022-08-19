@@ -218,23 +218,25 @@ def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, fi
 def plot_mean_bias(ds):
     target_mean = ds['target_pr'].sel(source="CPM").mean(dim="time")
     sample_mean = ds['pred_pr'].mean(dim=["sample_id", "time"])
+    bias = sample_mean - target_mean
+    bias_ratio = bias/target_mean
 
     vmin = min([da.min().values for da in [sample_mean, target_mean]])
     vmax = max([da.max().values for da in [sample_mean, target_mean]])
+
+    bias_vmax = abs(bias).max().values
+
+    bias_ratio_vmax = abs(bias_ratio).max().values
 
     for source in sample_mean["source"].values:
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
         for model in sample_mean["model"].values:
             IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
 
-            mean_ds = sample_mean.sel(source=source, model=model)
-
-            bias = mean_ds - target_mean
-
             fig, axd = plt.subplot_mosaic([["Sample", "Target"]], figsize=(12, 6), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
 
             ax = axd["Sample"]
-            plot_grid(mean_ds, ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
+            plot_grid(sample_mean.sel(source=source, model=model), ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
 
             ax = axd["Target"]
             plot_grid(target_mean, ax, title="Target pr mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
@@ -244,37 +246,38 @@ def plot_mean_bias(ds):
             fig, axd = plt.subplot_mosaic([["Bias", "Bias ratio"]], figsize=(12, 6), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
 
             ax = axd["Bias"]
-            plot_grid(bias, ax, title="Bias", norm=None, cmap="BrBG", center=0, add_colorbar=True)
+            plot_grid(bias.sel(source=source, model=model), ax, title="Bias", norm=None, cmap="BrBG", vmax=bias_vmax, center=0, add_colorbar=True)
 
             ax = axd["Bias ratio"]
-            plot_grid((bias/target_mean), ax, title="Bias/Target mean", norm=None, cmap="BrBG", center=0, add_colorbar=True)
+            plot_grid(bias_ratio.sel(source=source, model=model), ax, title="Bias/Target mean", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
 
             plt.show()
 
 def plot_std(ds):
     target_std = ds['target_pr'].sel(source="CPM").std(dim="time")
     sample_std = ds['pred_pr'].std(dim=["sample_id", "time"])
+    std_ratio = sample_std/target_std
 
     vmin = min([da.min().values for da in [sample_std, target_std]])
     vmax = max([da.max().values for da in [sample_std, target_std]])
+
+    ratio_vmax = max(2-(std_ratio.min().values), std_ratio.max().values)
 
     for source in sample_std["source"].values:
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
         for model in sample_std["model"].values:
             IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
 
-            std_ds = sample_std.sel(source=source, model=model)
-
             fig, axs = plt.subplots(1, 3, figsize=(20, 6), subplot_kw=dict(projection=cp_model_rotated_pole))
 
             ax = axs[0]
-            plot_grid(std_ds, ax, title="Sample std", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True, cmap="viridis")
+            plot_grid(sample_std.sel(source=source, model=model), ax, title="Sample std", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True, cmap="viridis")
 
             ax = axs[1]
             plot_grid(target_std, ax, title="Target pr std", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True, cmap="viridis")
 
             ax = axs[2]
-            plot_grid((std_ds/target_std), ax, title="Sample/Target pr std", norm=None, cmap="BrBG", center=1, add_colorbar=True)
+            plot_grid(std_ratio.sel(source=source, model=model), ax, title="Sample/Target pr std", norm=None, cmap="BrBG", vmax=ratio_vmax, center=1, add_colorbar=True)
 
             plt.show()
 
