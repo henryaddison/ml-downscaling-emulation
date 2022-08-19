@@ -60,7 +60,9 @@ def show_samples(ds, timestamps, vmin, vmax):
     plt.show()
 
     for ts in timestamps:
-        fig, axes = plt.subplots(len(ds["source"]), num_plots_per_ts, figsize=(80,10), constrained_layout=True, subplot_kw={'projection': cp_model_rotated_pole})
+        nrows = len(ds["source"])
+        ncols = num_plots_per_ts
+        fig, axes = plt.subplots(nrows, ncols, figsize=(6*ncols, 6*nrows), constrained_layout=True, subplot_kw={'projection': cp_model_rotated_pole})
 
         if len(ds["source"]) == 1:
             axes = [axes]
