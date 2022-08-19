@@ -42,6 +42,8 @@ def open_samples_ds(run_name, checkpoint_id, dataset_name, split):
     sample_ds_list = [ xr.open_dataset(sample_filepath) for sample_filepath in glob.glob(samples_filepath_pattern) ]
     # concatenate the samples along a new dimension
     ds = xr.concat(sample_ds_list, dim="sample_id")
+    # add a model dimension so can compare data from different ml models
+    ds = ds.expand_dims({"model": [run_name]})
     return ds
 
 def show_samples(ds, timestamps, vmin, vmax):
@@ -79,7 +81,8 @@ def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, fi
     hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
     _, bins, _ = target_pr.plot.hist(ax=ax, bins=50, density=True,alpha=1, label="Target", log=True, range=hrange)
     for source in pred_pr["source"].values:
-        pred_pr.sel(source=source).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{source} Samples", log=True, range=hrange, linewidth=3, linestyle="-")
+        for model in pred_pr["model"]:
+            pred_pr.sel(source=source, model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{model} {source} Samples", log=True, range=hrange, linewidth=3, linestyle="-")
 
     ax.set_title("Log density plot of samples and target precipitation", fontsize=24)
     ax.set_xlabel("Precip (mm day-1)", fontsize=16)
@@ -151,8 +154,9 @@ def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, fi
     ax = axes["Quantiles"]
     target_quantiles = target_pr.quantile(quantiles)
     for source in pred_pr["source"].values:
-        pred_quantiles = pred_pr.sel(source=source).chunk(dict(sample_id=-1)).quantile(quantiles)
-        ax.scatter(target_quantiles, pred_quantiles, label=source)
+        for model in pred_pr["model"]:
+            pred_quantiles = pred_pr.sel(source=source, model=model).chunk(dict(sample_id=-1)).quantile(quantiles)
+            ax.scatter(target_quantiles, pred_quantiles, label=f"{model} {source}")
 
     ideal_tr = max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
 
