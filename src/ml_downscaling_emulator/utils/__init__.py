@@ -6,7 +6,9 @@ import IPython
 import matplotlib
 import matplotlib.pyplot as plt
 import metpy.plots.ctables
+import numpy as np
 import pandas as pd
+import scipy
 import xarray as xr
 
 cp_model_rotated_pole = ccrs.RotatedPole(pole_longitude=177.5, pole_latitude=37.5)
@@ -48,8 +50,9 @@ def open_samples_ds(run_name, checkpoint_id, dataset_name, split):
     return ds
 
 def merge_over_runs(runs, dataset_name, split):
+    num_samples = 3
     samples_ds = xr.merge([
-        open_samples_ds(run_name, checkpoint_id, dataset_name, split).isel(sample_id=slice(3)) for run_name, checkpoint_id in runs
+        open_samples_ds(run_name, checkpoint_id, dataset_name, split).sel(sample_id=range(num_samples)) for run_name, checkpoint_id in runs
     ])
     eval_ds = xr.open_dataset(os.path.join(os.getenv("MOOSE_DERIVED_DATA"), "nc-datasets", dataset_name, f"{split}.nc"))
 
@@ -274,3 +277,37 @@ def plot_std(ds):
             plot_grid((std_ds/target_std), ax, title="Sample/Target pr std", norm=None, cmap="BrBG", center=1, add_colorbar=True)
 
             plt.show()
+
+
+
+def psd(batch):
+    npix = batch.shape[1]
+    fourier = np.fft.fftshift(np.fft.fftn(batch, axes=(1,2)), axes=(1,2))
+    amps = np.abs(fourier) ** 2 #/ npix**2
+    return amps
+
+def plot_psd(arg):
+    plt.figure(figsize=(12,12))
+    for label, precip_da in arg.items():
+        npix = precip_da["grid_latitude"].size
+        fourier_amplitudes = psd(precip_da.values.reshape(-1, npix, npix))
+
+        kfreq = np.fft.fftshift(np.fft.fftfreq(npix)) * npix
+        kfreq2D = np.meshgrid(kfreq, kfreq)
+        knrm = np.sqrt(kfreq2D[0]**2 + kfreq2D[1]**2)
+        kbins = np.arange(0.5, npix//2+1, 1.)
+        kvals = 0.5 * (kbins[1:] + kbins[:-1])
+
+        Abins, _, _ = scipy.stats.binned_statistic(knrm.flatten(), fourier_amplitudes.reshape(-1, npix*npix),
+                                                    statistic = "mean",
+                                                    bins = kbins)
+        mean_Abins = np.mean(Abins, axis=0)
+
+        plt.loglog(kvals, mean_Abins, label=label)
+
+    plt.legend()
+    plt.xlabel("$k$")
+    plt.ylabel("$P(k)$")
+    # plt.tight_layout()
+
+    plt.show()
