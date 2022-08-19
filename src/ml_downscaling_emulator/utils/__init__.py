@@ -6,7 +6,7 @@ import IPython
 import matplotlib
 import matplotlib.pyplot as plt
 import metpy.plots.ctables
-import numpy as np
+import pandas as pd
 import xarray as xr
 
 cp_model_rotated_pole = ccrs.RotatedPole(pole_longitude=177.5, pole_latitude=37.5)
@@ -45,6 +45,32 @@ def open_samples_ds(run_name, checkpoint_id, dataset_name, split):
     ds = xr.concat(sample_ds_list, dim="sample_id")
     # add a model dimension so can compare data from different ml models
     ds = ds.expand_dims(model=[run_name])
+    return ds
+
+def merge_over_runs(runs, dataset_name, split):
+    samples_ds = xr.merge([
+        open_samples_ds(run_name, checkpoint_id, dataset_name, split).isel(sample_id=slice(3)) for run_name, checkpoint_id in runs
+    ])
+    eval_ds = xr.open_dataset(os.path.join(os.getenv("MOOSE_DERIVED_DATA"), "nc-datasets", dataset_name, f"{split}.nc"))
+
+    return xr.merge([samples_ds, eval_ds], join="inner")
+
+def merge_over_sources(datasets, runs, split):
+    xr_datasets = []
+    sources = []
+    for source, dataset_name in datasets.items():
+        xr_datasets.append(merge_over_runs(runs, dataset_name, split))
+        sources.append(source)
+
+    return xr.concat(xr_datasets, pd.Index(sources, name='source'))
+
+def prep_eval_data(datasets, runs, split):
+    ds = merge_over_sources(datasets, runs, split)
+
+    # convert from kg m-2 s-1 (i.e. mm s-1) to mm day-1
+    ds["pred_pr"] = (ds["pred_pr"]*3600*24 ).assign_attrs({"units": "mm day-1"})
+    ds["target_pr"] = (ds["target_pr"]*3600*24).assign_attrs({"units": "mm day-1"})
+
     return ds
 
 def show_samples(ds, timestamps, vmin, vmax):
@@ -195,10 +221,10 @@ def plot_mean_bias(ds):
 
     for source in sample_mean["source"].values:
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
-        mean_ds = sample_mean.sel(source = source)
-        for model in mean_ds["model"].values:
+        for model in sample_mean["model"].values:
             IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
-            mean_ds = mean_ds.sel(model = model)
+
+            mean_ds = sample_mean.sel(source=source, model=model)
 
             bias = mean_ds - target_mean
 
@@ -230,11 +256,11 @@ def plot_std(ds):
     vmax = max([da.max().values for da in [sample_std, target_std]])
 
     for source in sample_std["source"].values:
-        std_ds = sample_std.sel(source = source)
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
-        for model in std_ds["model"].values:
-            std_ds = std_ds.sel(model = model)
+        for model in sample_std["model"].values:
             IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
+
+            std_ds = sample_std.sel(source=source, model=model)
 
             fig, axs = plt.subplots(1, 3, figsize=(20, 6), subplot_kw=dict(projection=cp_model_rotated_pole))
 
