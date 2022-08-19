@@ -70,7 +70,7 @@ def show_samples(ds, timestamps, vmin, vmax):
             plot_grid(ds.sel(source=source, time=ts)["target_pr"], ax, title=f"{source} Target pr {ts}", cmap=precip_cmap, norm=precip_norm, add_colorbar=False)
             for sample_idx in range(len(ds["sample_id"].values)):
                 ax = axes[source_idx][1+sample_idx]
-                plot_grid(ds.sel(source=source, time=ts, sample_id=sample_idx)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title=f"{source} Sample pr")
+                plot_grid(ds.sel(source=source, time=ts).isel(sample_id=sample_idx)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title=f"{source} Sample pr")
 
         plt.show()
 
