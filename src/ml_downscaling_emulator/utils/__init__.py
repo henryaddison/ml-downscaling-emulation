@@ -2,10 +2,13 @@ import glob
 import os
 
 import cartopy.crs as ccrs
+import IPython
 import matplotlib
 import matplotlib.pyplot as plt
 import metpy.plots.ctables
 import numpy as np
+import pandas as pd
+import scipy
 import xarray as xr
 
 cp_model_rotated_pole = ccrs.RotatedPole(pole_longitude=177.5, pole_latitude=37.5)
@@ -42,6 +45,35 @@ def open_samples_ds(run_name, checkpoint_id, dataset_name, split):
     sample_ds_list = [ xr.open_dataset(sample_filepath) for sample_filepath in glob.glob(samples_filepath_pattern) ]
     # concatenate the samples along a new dimension
     ds = xr.concat(sample_ds_list, dim="sample_id")
+    # add a model dimension so can compare data from different ml models
+    ds = ds.expand_dims(model=[run_name])
+    return ds
+
+def merge_over_runs(runs, dataset_name, split):
+    num_samples = 3
+    samples_ds = xr.merge([
+        open_samples_ds(run_name, checkpoint_id, dataset_name, split).sel(sample_id=range(num_samples)) for run_name, checkpoint_id in runs
+    ])
+    eval_ds = xr.open_dataset(os.path.join(os.getenv("MOOSE_DERIVED_DATA"), "nc-datasets", dataset_name, f"{split}.nc"))
+
+    return xr.merge([samples_ds, eval_ds], join="inner")
+
+def merge_over_sources(datasets, runs, split):
+    xr_datasets = []
+    sources = []
+    for source, dataset_name in datasets.items():
+        xr_datasets.append(merge_over_runs(runs, dataset_name, split))
+        sources.append(source)
+
+    return xr.concat(xr_datasets, pd.Index(sources, name='source'))
+
+def prep_eval_data(datasets, runs, split):
+    ds = merge_over_sources(datasets, runs, split)
+
+    # convert from kg m-2 s-1 (i.e. mm s-1) to mm day-1
+    ds["pred_pr"] = (ds["pred_pr"]*3600*24 ).assign_attrs({"units": "mm day-1"})
+    ds["target_pr"] = (ds["target_pr"]*3600*24).assign_attrs({"units": "mm day-1"})
+
     return ds
 
 def show_samples(ds, timestamps, vmin, vmax):
@@ -58,7 +90,9 @@ def show_samples(ds, timestamps, vmin, vmax):
     plt.show()
 
     for ts in timestamps:
-        fig, axes = plt.subplots(len(ds["source"]), num_plots_per_ts, figsize=(80,10), constrained_layout=True, subplot_kw={'projection': cp_model_rotated_pole})
+        nrows = len(ds["source"])
+        ncols = num_plots_per_ts
+        fig, axes = plt.subplots(nrows, ncols, figsize=(6*ncols, 6*nrows), constrained_layout=True, subplot_kw={'projection': cp_model_rotated_pole})
 
         if len(ds["source"]) == 1:
             axes = [axes]
@@ -66,9 +100,9 @@ def show_samples(ds, timestamps, vmin, vmax):
         for source_idx, source in enumerate(ds["source"].values):
             ax = axes[source_idx][0]
             plot_grid(ds.sel(source=source, time=ts)["target_pr"], ax, title=f"{source} Target pr {ts}", cmap=precip_cmap, norm=precip_norm, add_colorbar=False)
-            for sample_id in ds["sample_id"].values:
-                ax = axes[source_idx][1+sample_id]
-                plot_grid(ds.sel(source=source, time=ts, sample_id=sample_id)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title=f"{source} Sample pr")
+            for sample_idx in range(len(ds["sample_id"].values)):
+                ax = axes[source_idx][1+sample_idx]
+                plot_grid(ds.sel(source=source, time=ts).isel(sample_id=sample_idx)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title=f"{source} Sample pr")
 
         plt.show()
 
@@ -79,7 +113,8 @@ def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, fi
     hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
     _, bins, _ = target_pr.plot.hist(ax=ax, bins=50, density=True,alpha=1, label="Target", log=True, range=hrange)
     for source in pred_pr["source"].values:
-        pred_pr.sel(source=source).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{source} Samples", log=True, range=hrange, linewidth=3, linestyle="-")
+        for model in pred_pr["model"].values:
+            pred_pr.sel(source=source, model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{model} {source} Samples", log=True, range=hrange, linewidth=3, linestyle="-")
 
     ax.set_title("Log density plot of samples and target precipitation", fontsize=24)
     ax.set_xlabel("Precip (mm day-1)", fontsize=16)
@@ -151,8 +186,9 @@ def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, fi
     ax = axes["Quantiles"]
     target_quantiles = target_pr.quantile(quantiles)
     for source in pred_pr["source"].values:
-        pred_quantiles = pred_pr.sel(source=source).chunk(dict(sample_id=-1)).quantile(quantiles)
-        ax.scatter(target_quantiles, pred_quantiles, label=source)
+        for model in pred_pr["model"].values:
+            pred_quantiles = pred_pr.sel(source=source, model=model).chunk(dict(sample_id=-1)).quantile(quantiles)
+            ax.scatter(target_quantiles, pred_quantiles, label=f"{model} {source}")
 
     ideal_tr = max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
 
@@ -176,5 +212,105 @@ def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, fi
     ax.set_title("Density plot of residuals")
 
     fig.suptitle(figtitle, fontsize=32)
+
+    plt.show()
+
+def plot_mean_bias(ds):
+    target_mean = ds['target_pr'].sel(source="CPM").mean(dim="time")
+    sample_mean = ds['pred_pr'].mean(dim=["sample_id", "time"])
+    bias = sample_mean - target_mean
+    bias_ratio = bias/target_mean
+
+    vmin = min([da.min().values for da in [sample_mean, target_mean]])
+    vmax = max([da.max().values for da in [sample_mean, target_mean]])
+
+    bias_vmax = abs(bias).max().values
+
+    bias_ratio_vmax = abs(bias_ratio).max().values
+
+    for source in sample_mean["source"].values:
+        IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
+        for model in sample_mean["model"].values:
+            IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
+
+            fig, axd = plt.subplot_mosaic([["Sample", "Target"]], figsize=(12, 6), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+
+            ax = axd["Sample"]
+            plot_grid(sample_mean.sel(source=source, model=model), ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
+
+            ax = axd["Target"]
+            plot_grid(target_mean, ax, title="Target pr mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
+
+            plt.show()
+
+            fig, axd = plt.subplot_mosaic([["Bias", "Bias ratio"]], figsize=(12, 6), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+
+            ax = axd["Bias"]
+            plot_grid(bias.sel(source=source, model=model), ax, title="Bias", norm=None, cmap="BrBG", vmax=bias_vmax, center=0, add_colorbar=True)
+
+            ax = axd["Bias ratio"]
+            plot_grid(bias_ratio.sel(source=source, model=model), ax, title="Bias/Target mean", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
+
+            plt.show()
+
+def plot_std(ds):
+    target_std = ds['target_pr'].sel(source="CPM").std(dim="time")
+    sample_std = ds['pred_pr'].std(dim=["sample_id", "time"])
+    std_ratio = sample_std/target_std
+
+    vmin = min([da.min().values for da in [sample_std, target_std]])
+    vmax = max([da.max().values for da in [sample_std, target_std]])
+
+    ratio_vmax = max(2-(std_ratio.min().values), std_ratio.max().values)
+
+    for source in sample_std["source"].values:
+        IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
+        for model in sample_std["model"].values:
+            IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
+
+            fig, axs = plt.subplots(1, 3, figsize=(20, 6), subplot_kw=dict(projection=cp_model_rotated_pole))
+
+            ax = axs[0]
+            plot_grid(sample_std.sel(source=source, model=model), ax, title="Sample std", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True, cmap="viridis")
+
+            ax = axs[1]
+            plot_grid(target_std, ax, title="Target pr std", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True, cmap="viridis")
+
+            ax = axs[2]
+            plot_grid(std_ratio.sel(source=source, model=model), ax, title="Sample/Target pr std", norm=None, cmap="BrBG", vmax=ratio_vmax, center=1, add_colorbar=True)
+
+            plt.show()
+
+
+
+def psd(batch):
+    npix = batch.shape[1]
+    fourier = np.fft.fftshift(np.fft.fftn(batch, axes=(1,2)), axes=(1,2))
+    amps = np.abs(fourier) ** 2 #/ npix**2
+    return amps
+
+def plot_psd(arg):
+    plt.figure(figsize=(12,12))
+    for label, precip_da in arg.items():
+        npix = precip_da["grid_latitude"].size
+        fourier_amplitudes = psd(precip_da.values.reshape(-1, npix, npix))
+
+        kfreq = np.fft.fftshift(np.fft.fftfreq(npix)) * npix
+        kfreq2D = np.meshgrid(kfreq, kfreq)
+        knrm = np.sqrt(kfreq2D[0]**2 + kfreq2D[1]**2)
+        kbins = np.arange(0.5, npix//2+1, 1.)
+        kvals = 0.5 * (kbins[1:] + kbins[:-1])
+
+        Abins, _, _ = scipy.stats.binned_statistic(knrm.flatten(), fourier_amplitudes.reshape(-1, npix*npix),
+                                                    statistic = "mean",
+                                                    bins = kbins)
+        mean_Abins = np.mean(Abins, axis=0)
+
+        plt.loglog(kvals, mean_Abins, label=label)
+
+    plt.legend()
+    plt.xlabel("$k$")
+    plt.ylabel("$P(k)$")
+    # plt.tight_layout()
 
     plt.show()
