@@ -43,7 +43,7 @@ def plot_grid(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
     da.plot.pcolormesh(ax=ax, add_colorbar=add_colorbar, **kwargs)
     ax.set_title(title, fontsize=24)
     ax.coastlines()
-    ax.gridlines(draw_labels={"bottom": "x", "left": "y"}, x_inline=False, y_inline=False, xlabel_style=dict(fontsize=16), ylabel_style=dict(fontsize=24))
+    ax.gridlines(draw_labels={"bottom": "x", "left": "y"}, x_inline=False, y_inline=False, xlabel_style=dict(fontsize=24), ylabel_style=dict(fontsize=24))
 
 def open_samples_ds(run_name, checkpoint_id, dataset_name, split):
     samples_filepath_pattern = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/checkpoint-{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
@@ -120,9 +120,9 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
     for model in pred_pr["model"].values:
         pred_pr.sel(model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{HUMAN_MODEL_NAMES[model]}", log=True, range=hrange, linewidth=2, linestyle="-")
 
-    ax.set_title("Log density plot of samples and target precipitation")
-    ax.set_xlabel("Precip (mm day-1)")
-    ax.tick_params(axis='both', which='major')
+    ax.set_title("")
+    ax.set_xlabel("Precip (mm day-1)", fontsize=12)
+    ax.tick_params(axis='both', which='major', labelsize=12)
     if diagnostics == True:
         text = f"""
         # Timestamps: {pred_pr["time"].count().values}
@@ -140,7 +140,7 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
         Target max: {target_pr.max().values.round()}
         """
         ax.text(0.7, 0.5, text, fontsize=8, transform=ax.transAxes)
-    ax.legend()
+    ax.legend(fontsize=12)
     # ax.set_aspect(aspect=1)
 
     # fig, axes = plt.subplot_mosaic([["Quantiles"]], figsize=(5.5, 5.5), constrained_layout=True)
@@ -153,10 +153,10 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
         pred_quantiles = pred_pr.sel(model=model).chunk(dict(sample_id=-1)).quantile(quantiles)
         ax.scatter(target_quantiles, pred_quantiles, label=f"{HUMAN_MODEL_NAMES[model]}")
 
-    ax.set_xlabel("Target precip (mm day-1)")
-    ax.set_ylabel("Sample precip (mm day-1")
-    ax.set_title("Sample quantiles vs Target quantiles")
-    ax.legend()
+    ax.set_xlabel("Target precip (mm day-1)", fontsize=12)
+    ax.set_ylabel("Sample precip (mm day-1", fontsize=12)
+    # ax.set_title("Sample quantiles vs Target quantiles", fontsize=16)
+    ax.legend(fontsize=12)
     ax.set_aspect(aspect=1)
 
     # fig.suptitle(figtitle, fontsize=32)
