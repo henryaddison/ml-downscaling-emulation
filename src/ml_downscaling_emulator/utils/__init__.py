@@ -106,10 +106,10 @@ def show_samples(ds, timestamps, vmin, vmax):
 
         plt.show()
 
-def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, figtitle):
-    fig, axes = plt.subplot_mosaic([["Density"]], figsize=(20, 10), constrained_layout=True)
-    ax = axes["Density"]
+def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=False):
+    fig, axes = plt.subplot_mosaic([["Density", "Quantiles"]], figsize=(5.5, 5.5), constrained_layout=True)
 
+    ax = axes["Density"]
     hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
     _, bins, _ = target_pr.plot.hist(ax=ax, bins=50, density=True,alpha=1, label="Target", log=True, range=hrange)
     for source in pred_pr["source"].values:
@@ -119,70 +119,26 @@ def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, fi
     ax.set_title("Log density plot of samples and target precipitation", fontsize=24)
     ax.set_xlabel("Precip (mm day-1)", fontsize=16)
     ax.tick_params(axis='both', which='major', labelsize=16)
-    text = f"""
-    # Timestamps: {pred_pr["time"].count().values}
-    # Samples: {pred_pr.count().values}
-    # Targets: {target_pr.count().values}
-    % Samples == 0: {(((pred_pr == 0).sum()/pred_pr.count()).values*100).round()}
-    % Targets == 0: {(((target_pr == 0).sum()/target_pr.count()).values*100).round()}
-    % Samples < 1e-5: {(((pred_pr < 1e-5).sum()/pred_pr.count()).values*100).round()}
-    % Targets < 1e-5: {(((target_pr < 1e-5).sum()/target_pr.count()).values*100).round()}
-    % Samples < 0.1: {(((pred_pr < 0.1).sum()/pred_pr.count()).values*100).round()}
-    % Targets < 0.1: {(((target_pr < 0.1).sum()/target_pr.count()).values*100).round()}
-    % Samples < 1: {(((pred_pr < 1).sum()/pred_pr.count()).values*100).round()}
-    % Targets < 1: {(((target_pr < 1).sum()/target_pr.count()).values*100).round()}
-    Sample max: {pred_pr.max().values.round()}
-    Target max: {target_pr.max().values.round()}
-    """
-    ax.text(0.7, 0.5, text, fontsize=16, transform=ax.transAxes)
+    if diagnostics == True:
+        text = f"""
+        # Timestamps: {pred_pr["time"].count().values}
+        # Samples: {pred_pr.count().values}
+        # Targets: {target_pr.count().values}
+        % Samples == 0: {(((pred_pr == 0).sum()/pred_pr.count()).values*100).round()}
+        % Targets == 0: {(((target_pr == 0).sum()/target_pr.count()).values*100).round()}
+        % Samples < 1e-5: {(((pred_pr < 1e-5).sum()/pred_pr.count()).values*100).round()}
+        % Targets < 1e-5: {(((target_pr < 1e-5).sum()/target_pr.count()).values*100).round()}
+        % Samples < 0.1: {(((pred_pr < 0.1).sum()/pred_pr.count()).values*100).round()}
+        % Targets < 0.1: {(((target_pr < 0.1).sum()/target_pr.count()).values*100).round()}
+        % Samples < 1: {(((pred_pr < 1).sum()/pred_pr.count()).values*100).round()}
+        % Targets < 1: {(((target_pr < 1).sum()/target_pr.count()).values*100).round()}
+        Sample max: {pred_pr.max().values.round()}
+        Target max: {target_pr.max().values.round()}
+        """
+        ax.text(0.7, 0.5, text, fontsize=16, transform=ax.transAxes)
     ax.legend(fontsize=16)
+    ax.set_aspect(aspect=1)
 
-#     fig, axes = plt.subplot_mosaic([["Head density"], ["Tail density"], ["Extreme tail density"]]], figsize=(20, 20), constrained_layout=True)
-
-#     ax = axes["Head density"]
-#     thresholded_target_pr = target_pr.where(target_pr<=tail_thr)
-#     thresholded_pred_pr = pred_pr.where(pred_pr<=tail_thr)
-#     _, bins, _ = thresholded_pred_pr.plot.hist(ax=ax, bins=50, density=True,alpha=0.75, color="red", label="Sample")
-#     thresholded_target_pr.plot.hist(ax=ax, bins=bins, density=True,alpha=1, color="blue", histtype="step", label="Target")
-#     ax.set_title("Head of density plot of samples and target precipitation", fontsize=16)
-#     ax.set_xlabel("Precip (mm day-1)", fontsize=16)
-#     text = f"""
-#     # Samples: {thresholded_pred_pr.count().values}
-#     # Targets: {thresholded_target_pr.count().values}
-#     """
-#     ax.text(0.75, 0.50, text, fontsize=16, transform=ax.transAxes)
-#     ax.legend()
-
-#     ax = axes["Tail density"]
-#     thresholded_target_pr = target_pr.where(target_pr>tail_thr)
-#     thresholded_pred_pr = pred_pr.where(pred_pr>tail_thr)
-#     _, bins, _ = thresholded_pred_pr.plot.hist(ax=ax, bins=50, density=True,alpha=0.75, color="red", label="Sample")
-#     thresholded_target_pr.plot.hist(ax=ax, bins=bins, density=True,alpha=1, color="blue", histtype="step", label="Target")
-#     ax.set_title("Tail of density plot of samples and target precipitation", fontsize=16)
-#     ax.set_xlabel("Precip (mm day-1)", fontsize=16)
-#     ax.tick_params(axis='both', which='major', labelsize=32)
-#     text = f"""
-#     # Samples: {thresholded_pred_pr.count().values}
-#     # Targets: {thresholded_target_pr.count().values}
-#     """
-#     ax.text(0.75, 0.50, text, fontsize=16, transform=ax.transAxes)
-#     ax.legend()
-
-#     ax = axes["Extreme tail density"]
-#     thresholded_target_pr = target_pr.where(target_pr>extreme_thr)
-#     thresholded_pred_pr = pred_pr.where(pred_pr>extreme_thr)
-#     _, bins, _ = thresholded_pred_pr.plot.hist(ax=ax, bins=50, density=True,alpha=0.75, color="red", label="Samples")
-#     thresholded_target_pr.plot.hist(ax=ax, bins=bins, density=True,alpha=1, color="blue", histtype="step", label="Target", linewidth=5)
-#     ax.set_title("Extreme tail of density plot of samples and target precipitation", fontsize=16)
-#     ax.set_xlabel("Precip (mm day-1)", fontsize=16)
-#     text = f"""
-#     # Sample: {thresholded_pred_pr.count().values}
-#     # Target: {thresholded_target_pr.count().values}
-#     """
-#     ax.text(0.75, 0.5, text, fontsize=16, transform=ax.transAxes)
-#     ax.legend()
-
-    fig, axes = plt.subplot_mosaic([["Quantiles"]], figsize=(20, 10), constrained_layout=True)
     ax = axes["Quantiles"]
     target_quantiles = target_pr.quantile(quantiles)
     for source in pred_pr["source"].values:
@@ -195,21 +151,9 @@ def distribution_figure(target_pr, pred_pr, quantiles, tail_thr, extreme_thr, fi
     ax.plot([0,ideal_tr], [0,ideal_tr], color="orange", linestyle="--", label="Ideal")
     ax.set_xlabel("Target pr (mm day-1)", fontsize=16)
     ax.set_ylabel("Sample pr (mm day-1", fontsize=16)
-    ax.set_title("Sample quantiles vs Target quantiles (90th to 99.9th centiles)", fontsize=16)
-    # ax.set_xticks(target_quantiles, quantiles)
-    # ax.set_yticks(pred_quantiles, quantiles)
-    text = f"""
-
-    """
-    ax.text(0.75, 0.2, text, fontsize=16, transform=ax.transAxes)
+    ax.set_title("Sample quantiles vs Target quantiles", fontsize=16)
     ax.legend()
     ax.set_aspect(aspect=1)
-
-    fig, axes = plt.subplot_mosaic([["Residual"]], figsize=(20, 10), constrained_layout=True)
-    ax = axes["Residual"]
-    (target_pr - pred_pr).plot.hist(ax=ax, bins=100, density=True, color="brown")
-    ax.set_xlabel("Precip (mm day-1)")
-    ax.set_title("Density plot of residuals")
 
     fig.suptitle(figtitle, fontsize=32)
 
@@ -233,7 +177,7 @@ def plot_mean_bias(ds):
         for model in sample_mean["model"].values:
             IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
 
-            fig, axd = plt.subplot_mosaic([["Sample", "Target"]], figsize=(12, 6), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+            fig, axd = plt.subplot_mosaic([["Sample", "Target"]], figsize=(5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
 
             ax = axd["Sample"]
             plot_grid(sample_mean.sel(source=source, model=model), ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
@@ -243,7 +187,7 @@ def plot_mean_bias(ds):
 
             plt.show()
 
-            fig, axd = plt.subplot_mosaic([["Bias", "Bias ratio"]], figsize=(12, 6), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+            fig, axd = plt.subplot_mosaic([["Bias", "Bias ratio"]], figsize=(5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
 
             ax = axd["Bias"]
             plot_grid(bias.sel(source=source, model=model), ax, title="Bias", norm=None, cmap="BrBG", vmax=bias_vmax, center=0, add_colorbar=True)
@@ -290,7 +234,7 @@ def psd(batch):
     return amps
 
 def plot_psd(arg):
-    plt.figure(figsize=(12,12))
+    plt.figure(figsize=(5.5,5.5))
     for label, precip_da in arg.items():
         npix = precip_da["grid_latitude"].size
         fourier_amplitudes = psd(precip_da.values.reshape(-1, npix, npix))
