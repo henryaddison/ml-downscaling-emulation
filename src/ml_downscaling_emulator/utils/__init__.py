@@ -120,7 +120,7 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
     for model in pred_pr["model"].values:
         pred_pr.sel(model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{HUMAN_MODEL_NAMES[model]}", log=True, range=hrange, linewidth=2, linestyle="-")
 
-    ax.set_title("")
+    ax.set_title("Log density of sample and target precip", fontsize=16)
     ax.set_xlabel("Precip (mm day-1)", fontsize=12)
     ax.tick_params(axis='both', which='major', labelsize=12)
     if diagnostics == True:
@@ -155,7 +155,7 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
 
     ax.set_xlabel("Target precip (mm day-1)", fontsize=12)
     ax.set_ylabel("Sample precip (mm day-1", fontsize=12)
-    # ax.set_title("Sample quantiles vs Target quantiles", fontsize=16)
+    ax.set_title("Sample vs Target quantiles", fontsize=16)
     ax.legend(fontsize=12)
     ax.set_aspect(aspect=1)
 
