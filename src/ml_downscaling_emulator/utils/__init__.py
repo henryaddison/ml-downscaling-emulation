@@ -87,7 +87,7 @@ def show_samples(ds, timestamps, vmin, vmax):
 
     num_plots_per_ts = num_predictions+1 # plot each sample and true target pr
 
-    fig = plt.figure(figsize=(40, 5))
+    fig = plt.figure(figsize=(40, 5.5))
     ax = fig.add_axes([0.05, 0.80, 0.9, 0.05])
     cb = matplotlib.colorbar.ColorbarBase(ax, orientation='horizontal', cmap=precip_cmap, norm=precip_norm)
     ax.set_xlabel("Precip (mm day-1)", fontsize=32)
@@ -113,7 +113,7 @@ def show_samples(ds, timestamps, vmin, vmax):
         plt.show()
 
 def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=False):
-    fig, axes = plt.subplot_mosaic([["Density", "Quantiles"]], figsize=(5.5, 5.5), constrained_layout=True)
+    fig, axes = plt.subplot_mosaic([["Density", "Quantiles"]], figsize=(11, 5.5), constrained_layout=True)
 
     ax = axes["Density"]
     hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
@@ -182,7 +182,7 @@ def plot_mean_bias(ds):
         for model in sample_mean["model"].values:
             IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
 
-            fig, axd = plt.subplot_mosaic([["Sample", "Target"]], figsize=(11, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+            fig, axd = plt.subplot_mosaic([["Sample", "Target"]], figsize=(20, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
 
             ax = axd["Sample"]
             plot_grid(sample_mean.sel(source=source, model=model), ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
@@ -192,7 +192,7 @@ def plot_mean_bias(ds):
 
             plt.show()
 
-            fig, axd = plt.subplot_mosaic([["Bias", "Bias ratio"]], figsize=(11, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+            fig, axd = plt.subplot_mosaic([["Bias", "Bias ratio"]], figsize=(20, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
 
             ax = axd["Bias"]
             plot_grid(bias.sel(source=source, model=model), ax, title="Bias", norm=None, cmap="BrBG", vmax=bias_vmax, center=0, add_colorbar=True)
