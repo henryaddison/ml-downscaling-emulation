@@ -107,7 +107,7 @@ def show_samples(ds, timestamps, vmin, vmax):
         plt.show()
 
 def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=False):
-    fig, axes = plt.subplot_mosaic([["Density", "Quantiles"]], figsize=(5.5, 5.5), constrained_layout=True)
+    fig, axes = plt.subplot_mosaic([["Density", "Quantiles"]], figsize=(5.5, 11), constrained_layout=True)
 
     ax = axes["Density"]
     hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
@@ -115,9 +115,9 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
     for model in pred_pr["model"].values:
         pred_pr.sel(model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{model}", log=True, range=hrange, linewidth=3, linestyle="-")
 
-    ax.set_title("Log density plot of samples and target precipitation", fontsize=24)
-    ax.set_xlabel("Precip (mm day-1)", fontsize=16)
-    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.set_title("Log density plot of samples and target precipitation", fontsize=12)
+    ax.set_xlabel("Precip (mm day-1)", fontsize=8)
+    ax.tick_params(axis='both', which='major', labelsize=8)
     if diagnostics == True:
         text = f"""
         # Timestamps: {pred_pr["time"].count().values}
@@ -134,8 +134,8 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
         Sample max: {pred_pr.max().values.round()}
         Target max: {target_pr.max().values.round()}
         """
-        ax.text(0.7, 0.5, text, fontsize=16, transform=ax.transAxes)
-    ax.legend(fontsize=16)
+        ax.text(0.7, 0.5, text, fontsize=8, transform=ax.transAxes)
+    ax.legend(fontsize=8)
     ax.set_aspect(aspect=1)
 
     ax = axes["Quantiles"]
