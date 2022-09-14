@@ -35,7 +35,6 @@ STYLES = {
 HUMAN_MODEL_NAMES = {
     "gcmx-4x_bham_vorticity850_random-fixed-gcmx-vort-grid": "No feature map",
     "gcmx-4x_bham_vorticity850_random-learnt-map-8": "8-channel feature map",
-
 }
 
 def plot_grid(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
@@ -117,7 +116,7 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
 
     ax = axes["Density"]
     hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
-    _, bins, _ = target_pr.plot.hist(ax=ax, bins=50, density=True,alpha=1, label="Target", log=True, range=hrange)
+    _, bins, _ = target_pr.plot.hist(ax=ax, bins=50, density=True, color="black", alpha=0.2, label="Target", log=True, range=hrange)
     for model in pred_pr["model"].values:
         pred_pr.sel(model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{HUMAN_MODEL_NAMES[model]}", log=True, range=hrange, linewidth=2, linestyle="-")
 
@@ -149,7 +148,7 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
     target_quantiles = target_pr.quantile(quantiles)
     ideal_tr = target_quantiles.max().values+10 # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
 
-    ax.plot([0,ideal_tr], [0,ideal_tr], color="orange", linestyle="--", label="Ideal")
+    ax.plot([0,ideal_tr], [0,ideal_tr], color="black", linestyle="--", label="Ideal")
     for model in pred_pr["model"].values:
         pred_quantiles = pred_pr.sel(model=model).chunk(dict(sample_id=-1)).quantile(quantiles)
         ax.scatter(target_quantiles, pred_quantiles, label=f"{HUMAN_MODEL_NAMES[model]}")
