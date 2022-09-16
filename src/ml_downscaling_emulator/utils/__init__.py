@@ -149,7 +149,7 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
     ideal_tr = target_quantiles.max().values+10 # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
 
     ax.plot([0,ideal_tr], [0,ideal_tr], color="black", linestyle="--", label="Ideal")
-    ax.plot([0,ideal_tr], [0,0.9*ideal_tr], color="black", linestyle="--")
+    ax.plot([0,0.9*ideal_tr], [0,0.9*ideal_tr], color="black", linestyle="--")
     for model in pred_pr["model"].values:
         pred_quantiles = pred_pr.sel(model=model).chunk(dict(sample_id=-1)).quantile(quantiles)
         ax.scatter(target_quantiles, pred_quantiles, label=f"{HUMAN_MODEL_NAMES[model]}")
