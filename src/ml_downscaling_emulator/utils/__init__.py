@@ -33,8 +33,10 @@ STYLES = {
 }
 
 HUMAN_MODEL_NAMES = {
-    "gcmx-4x_bham_vorticity850_random-fixed-gcmx-vort-grid": "No feature map",
-    "gcmx-4x_bham_vorticity850_random-learnt-map-8": "8-channel feature map",
+    "gcmx-4x_bham_vorticity850_random-fixed-gcmx-vort-grid": "No loc-spec",
+    "gcmx-4x_bham_vorticity850_random-learnt-map-8": "8-ch loc-spec params",
+    "gcmx-4x_bham_vorticity850_random-stored-transforms": "Stored transforms, no loc-spec",
+    "gcmx-4x_bham_vorticity850_random-fm-8-stored-transforms": "Stored transforms, 8-ch loc-spec params",
 }
 
 def plot_grid(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
@@ -81,7 +83,7 @@ def prep_eval_data(datasets, runs, split):
 
     return ds
 
-def show_samples(ds, timestamps, vmin, vmax):
+def show_samples(ds, timestamps):
     num_predictions = len(ds["sample_id"])
 
     num_plots_per_ts = num_predictions+1 # plot each sample and true target pr
@@ -182,20 +184,13 @@ def plot_mean_bias(ds):
         for model in sample_mean["model"].values:
             IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
 
-            fig, axd = plt.subplot_mosaic([["Sample", "Target"]], figsize=(20, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+            fig, axd = plt.subplot_mosaic([["Sample", "Target", "Bias ratio"]], figsize=(30, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
 
             ax = axd["Sample"]
             plot_grid(sample_mean.sel(source=source, model=model), ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
 
             ax = axd["Target"]
             plot_grid(target_mean, ax, title="Target pr mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
-
-            plt.show()
-
-            fig, axd = plt.subplot_mosaic([["Bias", "Bias ratio"]], figsize=(20, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
-
-            ax = axd["Bias"]
-            plot_grid(bias.sel(source=source, model=model), ax, title="Bias", norm=None, cmap="BrBG", vmax=bias_vmax, center=0, add_colorbar=True)
 
             ax = axd["Bias ratio"]
             plot_grid(bias_ratio.sel(source=source, model=model), ax, title="Bias/Target mean", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
