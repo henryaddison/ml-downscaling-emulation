@@ -33,8 +33,10 @@ STYLES = {
 }
 
 HUMAN_MODEL_NAMES = {
-    "gcmx-4x_bham_vorticity850_random-fixed-gcmx-vort-grid": "No feature map",
-    "gcmx-4x_bham_vorticity850_random-learnt-map-8": "8-channel feature map",
+    "gcmx-4x_bham_vorticity850_random-fixed-gcmx-vort-grid": "No loc-spec",
+    "gcmx-4x_bham_vorticity850_random-learnt-map-8": "8-ch loc-spec",
+    "gcmx-4x_bham_vorticity850_random-stored-transforms": "Stored Ts, No loc-spec",
+    "gcmx-4x_bham_vorticity850_random-fm-8-stored-transforms": "Stored Ts, 8-ch loc-spec",
 }
 
 def plot_grid(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
@@ -81,7 +83,7 @@ def prep_eval_data(datasets, runs, split):
 
     return ds
 
-def show_samples(ds, timestamps, vmin, vmax):
+def show_samples(ds, timestamps):
     num_predictions = len(ds["sample_id"])
 
     num_plots_per_ts = num_predictions+1 # plot each sample and true target pr
@@ -120,9 +122,9 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
     for model in pred_pr["model"].values:
         pred_pr.sel(model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{HUMAN_MODEL_NAMES[model]}", log=True, range=hrange, linewidth=2, linestyle="-")
 
-    ax.set_title("Log density of sample and target precip", fontsize=16)
-    ax.set_xlabel("Precip (mm day-1)", fontsize=12)
-    ax.tick_params(axis='both', which='major', labelsize=12)
+    ax.set_title("Log density of sample and target precip")
+    ax.set_xlabel("Precip (mm day-1)")
+    ax.tick_params(axis='both', which='major')
     if diagnostics == True:
         text = f"""
         # Timestamps: {pred_pr["time"].count().values}
@@ -140,28 +142,25 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
         Target max: {target_pr.max().values.round()}
         """
         ax.text(0.7, 0.5, text, fontsize=8, transform=ax.transAxes)
-    ax.legend(fontsize=12)
+    ax.legend()
     # ax.set_aspect(aspect=1)
 
-    # fig, axes = plt.subplot_mosaic([["Quantiles"]], figsize=(5.5, 5.5), constrained_layout=True)
     ax = axes["Quantiles"]
     target_quantiles = target_pr.quantile(quantiles)
     ideal_tr = target_quantiles.max().values+10 # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
 
     ax.plot([0,ideal_tr], [0,ideal_tr], color="black", linestyle="--", label="Ideal")
-    ax.plot([0,0.9*ideal_tr], [0,0.9*ideal_tr], color="black", linestyle="--")
     for model in pred_pr["model"].values:
         pred_quantiles = pred_pr.sel(model=model).chunk(dict(sample_id=-1)).quantile(quantiles)
         ax.scatter(target_quantiles, pred_quantiles, label=f"{HUMAN_MODEL_NAMES[model]}")
 
-    ax.set_xlabel("Target precip (mm day-1)", fontsize=12)
-    ax.set_ylabel("Sample precip (mm day-1", fontsize=12)
-    ax.set_title("Sample vs Target quantiles", fontsize=16)
-    ax.legend(fontsize=12)
+    ax.set_xlabel("Target precip (mm day-1)")
+    ax.set_ylabel("Sample precip (mm day-1")
+    ax.set_title("Sample vs Target quantiles")
+    ax.legend()
     ax.set_aspect(aspect=1)
 
     # fig.suptitle(figtitle, fontsize=32)
-
     plt.show()
 
 def plot_mean_bias(ds):
@@ -179,28 +178,23 @@ def plot_mean_bias(ds):
 
     for source in sample_mean["source"].values:
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
+
+        IPython.display.display_html(f"<h2>Means</h2>", raw=True)
+        fig, axd = plt.subplot_mosaic([np.concatenate([["Target mean"], sample_mean["model"].values])], figsize=((len(sample_mean["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+        ax = axd["Target mean"]
+        plot_grid(target_mean, ax, title="Target mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
         for model in sample_mean["model"].values:
-            IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
+            ax = axd[model]
+            plot_grid(sample_mean.sel(source=source, model=model), ax, title=f"{HUMAN_MODEL_NAMES[model]}", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
+        plt.show()
 
-            fig, axd = plt.subplot_mosaic([["Sample", "Target"]], figsize=(20, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
-
-            ax = axd["Sample"]
-            plot_grid(sample_mean.sel(source=source, model=model), ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
-
-            ax = axd["Target"]
-            plot_grid(target_mean, ax, title="Target pr mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
-
-            plt.show()
-
-            fig, axd = plt.subplot_mosaic([["Bias", "Bias ratio"]], figsize=(20, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
-
-            ax = axd["Bias"]
-            plot_grid(bias.sel(source=source, model=model), ax, title="Bias", norm=None, cmap="BrBG", vmax=bias_vmax, center=0, add_colorbar=True)
-
-            ax = axd["Bias ratio"]
-            plot_grid(bias_ratio.sel(source=source, model=model), ax, title="Bias/Target mean", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
-
-            plt.show()
+        IPython.display.display_html(f"<h2>Bias/Target mean</h2>", raw=True)
+        fig, axd = plt.subplot_mosaic([np.concatenate([["Target bias ratio"], bias_ratio["model"].values])], figsize=((len(bias_ratio["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+        axd["Target bias ratio"].axis("off")
+        for model in bias_ratio["model"].values:
+            ax = axd[model]
+            plot_grid(bias_ratio.sel(source=source, model=model), ax, title=f"{HUMAN_MODEL_NAMES[model]}", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
+        plt.show()
 
 def plot_std(ds):
     target_std = ds['target_pr'].sel(source="CPM").std(dim="time")
