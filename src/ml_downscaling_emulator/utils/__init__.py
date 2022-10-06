@@ -190,7 +190,7 @@ def plot_mean_bias(ds):
             plot_grid(sample_mean.sel(source=source, model=model), ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
         plt.show()
 
-        fig, axd = plt.subplot_mosaic([["Target bias ratio"]+bias_ratio["model"].values], figsize=(len(bias_ratio["model"].values)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+        fig, axd = plt.subplot_mosaic([np.concatenate([["Target bias ratio"], bias_ratio["model"].values])], figsize=(len(bias_ratio["model"].values)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
         axd["Target bias ratio"].axis("off")
         for model in bias_ratio["model"].values:
             ax = axd[model]
