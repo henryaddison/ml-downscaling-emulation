@@ -114,7 +114,7 @@ def show_samples(ds, timestamps):
         plt.show()
 
 def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=False):
-    fig, axes = plt.subplot_mosaic([["Density"]], figsize=(5.5, 5.5), constrained_layout=True)
+    fig, axes = plt.subplot_mosaic([["Density", "Quantiles"]], figsize=(11, 5.5), constrained_layout=True)
 
     ax = axes["Density"]
     hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
@@ -144,8 +144,6 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
         ax.text(0.7, 0.5, text, fontsize=8, transform=ax.transAxes)
     ax.legend()
     # ax.set_aspect(aspect=1)
-
-    fig, axes = plt.subplot_mosaic([["Quantiles"]], figsize=(5.5, 5.5), constrained_layout=True)
 
     ax = axes["Quantiles"]
     target_quantiles = target_pr.quantile(quantiles)
