@@ -182,7 +182,7 @@ def plot_mean_bias(ds):
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
 
         IPython.display.display_html(f"<h2>Means</h2>", raw=True)
-        fig, axd = plt.subplot_mosaic([np.concatenate(["Target mean"], sample_mean["model"].values)], figsize=((len(sample_mean["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+        fig, axd = plt.subplot_mosaic([np.concatenate([["Target mean"], sample_mean["model"].values])], figsize=((len(sample_mean["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
         ax = axd["Target mean"]
         plot_grid(target_mean, ax, title="Target pr mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
         for model in sample_mean["model"].values:
