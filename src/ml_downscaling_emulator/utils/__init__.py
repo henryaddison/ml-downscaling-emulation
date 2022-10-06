@@ -114,7 +114,7 @@ def show_samples(ds, timestamps):
         plt.show()
 
 def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=False):
-    fig, axes = plt.subplot_mosaic([["Density", "Quantiles"]], figsize=(11, 5.5), constrained_layout=True)
+    fig, axes = plt.subplot_mosaic([["Density"]], figsize=(5.5, 5.5), constrained_layout=True)
 
     ax = axes["Density"]
     hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
@@ -122,9 +122,9 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
     for model in pred_pr["model"].values:
         pred_pr.sel(model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{HUMAN_MODEL_NAMES[model]}", log=True, range=hrange, linewidth=2, linestyle="-")
 
-    ax.set_title("Log density of sample and target precip", fontsize=16)
-    ax.set_xlabel("Precip (mm day-1)", fontsize=12)
-    ax.tick_params(axis='both', which='major', labelsize=12)
+    ax.set_title("Log density of sample and target precip")
+    ax.set_xlabel("Precip (mm day-1)")
+    ax.tick_params(axis='both', which='major')
     if diagnostics == True:
         text = f"""
         # Timestamps: {pred_pr["time"].count().values}
@@ -142,28 +142,27 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
         Target max: {target_pr.max().values.round()}
         """
         ax.text(0.7, 0.5, text, fontsize=8, transform=ax.transAxes)
-    ax.legend(fontsize=12)
+    ax.legend()
     # ax.set_aspect(aspect=1)
 
-    # fig, axes = plt.subplot_mosaic([["Quantiles"]], figsize=(5.5, 5.5), constrained_layout=True)
+    fig, axes = plt.subplot_mosaic([["Quantiles"]], figsize=(5.5, 5.5), constrained_layout=True)
+
     ax = axes["Quantiles"]
     target_quantiles = target_pr.quantile(quantiles)
     ideal_tr = target_quantiles.max().values+10 # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
 
     ax.plot([0,ideal_tr], [0,ideal_tr], color="black", linestyle="--", label="Ideal")
-    ax.plot([0,0.9*ideal_tr], [0,0.9*ideal_tr], color="black", linestyle="--")
     for model in pred_pr["model"].values:
         pred_quantiles = pred_pr.sel(model=model).chunk(dict(sample_id=-1)).quantile(quantiles)
         ax.scatter(target_quantiles, pred_quantiles, label=f"{HUMAN_MODEL_NAMES[model]}")
 
-    ax.set_xlabel("Target precip (mm day-1)", fontsize=12)
-    ax.set_ylabel("Sample precip (mm day-1", fontsize=12)
-    ax.set_title("Sample vs Target quantiles", fontsize=16)
-    ax.legend(fontsize=12)
+    ax.set_xlabel("Target precip (mm day-1)")
+    ax.set_ylabel("Sample precip (mm day-1")
+    ax.set_title("Sample vs Target quantiles")
+    ax.legend()
     ax.set_aspect(aspect=1)
 
     # fig.suptitle(figtitle, fontsize=32)
-
     plt.show()
 
 def plot_mean_bias(ds):
