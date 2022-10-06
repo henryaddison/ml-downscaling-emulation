@@ -34,9 +34,9 @@ STYLES = {
 
 HUMAN_MODEL_NAMES = {
     "gcmx-4x_bham_vorticity850_random-fixed-gcmx-vort-grid": "No loc-spec",
-    "gcmx-4x_bham_vorticity850_random-learnt-map-8": "8-ch loc-spec params",
-    "gcmx-4x_bham_vorticity850_random-stored-transforms": "Stored transforms, no loc-spec",
-    "gcmx-4x_bham_vorticity850_random-fm-8-stored-transforms": "Stored transforms, 8-ch loc-spec params",
+    "gcmx-4x_bham_vorticity850_random-learnt-map-8": "8-ch loc-spec",
+    "gcmx-4x_bham_vorticity850_random-stored-transforms": "Stored Ts, No loc-spec",
+    "gcmx-4x_bham_vorticity850_random-fm-8-stored-transforms": "Stored Ts, 8-ch loc-spec",
 }
 
 def plot_grid(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
@@ -182,14 +182,14 @@ def plot_mean_bias(ds):
         IPython.display.display_html(f"<h2>Means</h2>", raw=True)
         fig, axd = plt.subplot_mosaic([np.concatenate([["Target mean"], sample_mean["model"].values])], figsize=((len(sample_mean["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
         ax = axd["Target mean"]
-        plot_grid(target_mean, ax, title="Target pr mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
+        plot_grid(target_mean, ax, title="Target mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
         for model in sample_mean["model"].values:
             ax = axd[model]
-            plot_grid(sample_mean.sel(source=source, model=model), ax, title=f"{HUMAN_MODEL_NAMES[model]} mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
+            plot_grid(sample_mean.sel(source=source, model=model), ax, title=f"{HUMAN_MODEL_NAMES[model]}", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
         plt.show()
 
         IPython.display.display_html(f"<h2>Bias/Target mean</h2>", raw=True)
-        fig, axd = plt.subplot_mosaic([np.concatenate([["Target bias ratio"], bias_ratio["model"].values])], figsize=(len(bias_ratio["model"].values)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+        fig, axd = plt.subplot_mosaic([np.concatenate([["Target bias ratio"], bias_ratio["model"].values])], figsize=((len(bias_ratio["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
         axd["Target bias ratio"].axis("off")
         for model in bias_ratio["model"].values:
             ax = axd[model]
