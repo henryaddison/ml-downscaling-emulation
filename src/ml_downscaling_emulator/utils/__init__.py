@@ -181,21 +181,22 @@ def plot_mean_bias(ds):
 
     for source in sample_mean["source"].values:
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
+
+        IPython.display.display_html(f"<h2>Means</h2>", raw=True)
+        fig, axd = plt.subplot_mosaic([["Target mean"]+sample_mean["model"].values], figsize=((len(sample_mean["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+        ax = axd["Target mean"]
+        plot_grid(target_mean, ax, title="Target pr mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
         for model in sample_mean["model"].values:
-            IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
-
-            fig, axd = plt.subplot_mosaic([["Sample", "Target", "Bias ratio"]], figsize=(30, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
-
-            ax = axd["Sample"]
+            ax = axd[model]
             plot_grid(sample_mean.sel(source=source, model=model), ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
+        plt.show()
 
-            ax = axd["Target"]
-            plot_grid(target_mean, ax, title="Target pr mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
-
-            ax = axd["Bias ratio"]
+        fig, axd = plt.subplot_mosaic([["Target bias ratio"]+bias_ratio["model"].values], figsize=(len(bias_ratio["model"].values)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+        axd["Target bias ratio"].axis("off")
+        for model in bias_ratio["model"].values:
+            ax = axd[model]
             plot_grid(bias_ratio.sel(source=source, model=model), ax, title="Bias/Target mean", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
-
-            plt.show()
+        plt.show()
 
 def plot_std(ds):
     target_std = ds['target_pr'].sel(source="CPM").std(dim="time")
