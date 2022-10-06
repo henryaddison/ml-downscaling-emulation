@@ -8,7 +8,7 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 import xarray as xr
 import yaml
-from .dataset import CropT, Standardize, UnitRangeT, ClipT, SqrtT, ComposeT, XRDataset
+from .dataset import CropT, Standardize, MinMax, ClipT, SqrtT, ComposeT, XRDataset
 
 def train(train_dl, val_dl, model, criterion, optimizer, epochs, device):
     for epoch in range(epochs):
@@ -85,11 +85,11 @@ def get_transform(data_dirpath):
     transform = ComposeT([
         CropT(32),
         Standardize(variables),
-        UnitRangeT(variables)])
+        MinMax(variables)])
     target_transform = ComposeT([
         SqrtT(target_variables),
         ClipT(target_variables),
-        UnitRangeT(target_variables),
+        MinMax(target_variables),
     ])
     xr_data_train = transform.fit_transform(xr_data_train)
     xr_data_train = target_transform.fit_transform(xr_data_train)
