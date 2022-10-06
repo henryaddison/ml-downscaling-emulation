@@ -185,14 +185,15 @@ def plot_mean_bias(ds):
         plot_grid(target_mean, ax, title="Target pr mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
         for model in sample_mean["model"].values:
             ax = axd[model]
-            plot_grid(sample_mean.sel(source=source, model=model), ax, title="Sample mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
+            plot_grid(sample_mean.sel(source=source, model=model), ax, title=f"{HUMAN_MODEL_NAMES[model]} mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
         plt.show()
 
+        IPython.display.display_html(f"<h2>Bias/Target mean</h2>", raw=True)
         fig, axd = plt.subplot_mosaic([np.concatenate([["Target bias ratio"], bias_ratio["model"].values])], figsize=(len(bias_ratio["model"].values)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
         axd["Target bias ratio"].axis("off")
         for model in bias_ratio["model"].values:
             ax = axd[model]
-            plot_grid(bias_ratio.sel(source=source, model=model), ax, title="Bias/Target mean", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
+            plot_grid(bias_ratio.sel(source=source, model=model), ax, title=f"{HUMAN_MODEL_NAMES[model]}", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
         plt.show()
 
 def plot_std(ds):
