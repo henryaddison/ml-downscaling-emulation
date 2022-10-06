@@ -29,7 +29,30 @@ class Standardize():
 
     return ds
 
+class MinMax():
+  def __init__(self, variables):
+    self.variables = variables
+
+  def fit(self, train_ds):
+    self.maxs = { var:  train_ds[var].max().values for var in self.variables }
+    self.mins = { var:  train_ds[var].min().values for var in self.variables }
+
+    return self
+
+  def transform(self, ds):
+    for var in self.variables:
+      ds[var] = (ds[var]-self.mins[var])/(self.maxs[var]-self.mins[var])
+
+    return ds
+
+  def invert(self, ds):
+    for var in self.variables:
+      ds[var] = ds[var]*(self.maxs[var]-self.mins[var]) + self.mins[var]
+
+    return ds
+
 class UnitRangeT():
+  """WARNING: This transform assumes all values are positive"""
   def __init__(self, variables):
     self.variables = variables
 
