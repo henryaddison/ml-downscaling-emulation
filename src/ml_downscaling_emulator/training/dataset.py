@@ -51,6 +51,28 @@ class MinMax():
 
     return ds
 
+class UnitRangeT():
+  """WARNING: This transform assumes all values are positive"""
+  def __init__(self, variables):
+    self.variables = variables
+
+  def fit(self, train_ds):
+    self.maxs = { var:  train_ds[var].max().values for var in self.variables }
+
+    return self
+
+  def transform(self, ds):
+    for var in self.variables:
+      ds[var] = ds[var]/self.maxs[var]
+
+    return ds
+
+  def invert(self, ds):
+    for var in self.variables:
+      ds[var] = ds[var]*self.maxs[var]
+
+    return ds
+
 class ClipT():
   def __init__(self, variables):
     self.variables = variables
