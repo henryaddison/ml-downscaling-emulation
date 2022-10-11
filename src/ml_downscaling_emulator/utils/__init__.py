@@ -32,13 +32,6 @@ STYLES = {
     }
 }
 
-HUMAN_MODEL_NAMES = {
-    "gcmx-4x_bham_vorticity850_random-fixed-gcmx-vort-grid": "No loc-spec",
-    "gcmx-4x_bham_vorticity850_random-learnt-map-8": "8-ch loc-spec",
-    "gcmx-4x_bham_vorticity850_random-stored-transforms": "Stored Ts, No loc-spec",
-    "gcmx-4x_bham_vorticity850_random-fm-8-stored-transforms": "Stored Ts, 8-ch loc-spec",
-}
-
 def plot_grid(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
     if style is not None:
         kwargs = (STYLES[style] | kwargs)
@@ -47,19 +40,19 @@ def plot_grid(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
     ax.coastlines()
     ax.gridlines(draw_labels={"bottom": "x", "left": "y"}, x_inline=False, y_inline=False, xlabel_style=dict(fontsize=24), ylabel_style=dict(fontsize=24))
 
-def open_samples_ds(run_name, checkpoint_id, dataset_name, split):
+def open_samples_ds(run_name, human_name, checkpoint_id, dataset_name, split):
     samples_filepath_pattern = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/checkpoint-{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
     sample_ds_list = [ xr.open_dataset(sample_filepath) for sample_filepath in glob.glob(samples_filepath_pattern) ]
     # concatenate the samples along a new dimension
     ds = xr.concat(sample_ds_list, dim="sample_id")
     # add a model dimension so can compare data from different ml models
-    ds = ds.expand_dims(model=[run_name])
+    ds = ds.expand_dims(model=[human_name])
     return ds
 
 def merge_over_runs(runs, dataset_name, split):
     num_samples = 3
     samples_ds = xr.merge([
-        open_samples_ds(run_name, checkpoint_id, dataset_name, split).sel(sample_id=range(num_samples)) for run_name, checkpoint_id in runs
+        open_samples_ds(run_name, human_name, checkpoint_id, dataset_name, split).sel(sample_id=range(num_samples)) for run_name, checkpoint_id, human_name in runs
     ])
     eval_ds = xr.open_dataset(os.path.join(os.getenv("MOOSE_DERIVED_DATA"), "nc-datasets", dataset_name, f"{split}.nc"))
 
@@ -120,7 +113,7 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
     hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
     _, bins, _ = target_pr.plot.hist(ax=ax, bins=50, density=True, color="black", alpha=0.2, label="Target", log=True, range=hrange)
     for model in pred_pr["model"].values:
-        pred_pr.sel(model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{HUMAN_MODEL_NAMES[model]}", log=True, range=hrange, linewidth=2, linestyle="-")
+        pred_pr.sel(model=model).plot.hist(ax=ax, bins=bins, density=True,alpha=0.75, histtype="step", label=f"{model}", log=True, range=hrange, linewidth=2, linestyle="-")
 
     ax.set_title("Log density of sample and target precip")
     ax.set_xlabel("Precip (mm day-1)")
@@ -152,7 +145,7 @@ def distribution_figure(target_pr, pred_pr, quantiles, figtitle, diagnostics=Fal
     ax.plot([0,ideal_tr], [0,ideal_tr], color="black", linestyle="--", label="Ideal")
     for model in pred_pr["model"].values:
         pred_quantiles = pred_pr.sel(model=model).chunk(dict(sample_id=-1)).quantile(quantiles)
-        ax.scatter(target_quantiles, pred_quantiles, label=f"{HUMAN_MODEL_NAMES[model]}")
+        ax.scatter(target_quantiles, pred_quantiles, label=f"{model}")
 
     ax.set_xlabel("Target precip (mm day-1)")
     ax.set_ylabel("Sample precip (mm day-1")
@@ -185,7 +178,7 @@ def plot_mean_bias(ds):
         plot_grid(target_mean, ax, title="Target mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
         for model in sample_mean["model"].values:
             ax = axd[model]
-            plot_grid(sample_mean.sel(source=source, model=model), ax, title=f"{HUMAN_MODEL_NAMES[model]}", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
+            plot_grid(sample_mean.sel(source=source, model=model), ax, title=f"{model}", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
         plt.show()
 
         IPython.display.display_html(f"<h2>Bias/Target mean</h2>", raw=True)
@@ -193,7 +186,7 @@ def plot_mean_bias(ds):
         axd["Target bias ratio"].axis("off")
         for model in bias_ratio["model"].values:
             ax = axd[model]
-            plot_grid(bias_ratio.sel(source=source, model=model), ax, title=f"{HUMAN_MODEL_NAMES[model]}", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
+            plot_grid(bias_ratio.sel(source=source, model=model), ax, title=f"{model}", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
         plt.show()
 
 def plot_std(ds):
