@@ -79,30 +79,26 @@ def prep_eval_data(datasets, runs, split):
 def show_samples(ds, timestamps):
     num_predictions = len(ds["sample_id"])
 
-    num_plots_per_ts = num_predictions+1 # plot each sample and true target pr
-
-    fig = plt.figure(figsize=(40, 5.5))
-    ax = fig.add_axes([0.05, 0.80, 0.9, 0.05])
-    cb = matplotlib.colorbar.ColorbarBase(ax, orientation='horizontal', cmap=precip_cmap, norm=precip_norm)
-    ax.set_xlabel("Precip (mm day-1)", fontsize=32)
-    ax.set_xticks(precip_clevs)
-    ax.tick_params(axis='both', which='major', labelsize=32)
-    plt.show()
-
-    for ts in timestamps:
-        nrows = len(ds["source"])
-        ncols = num_plots_per_ts
-        fig, axes = plt.subplots(nrows, ncols, figsize=(6*ncols, 6*nrows), constrained_layout=True, subplot_kw={'projection': cp_model_rotated_pole})
-
-        if len(ds["source"]) == 1:
-            axes = [axes]
-
-        for source_idx, source in enumerate(ds["source"].values):
-            ax = axes[source_idx][0]
-            plot_grid(ds.sel(source=source, time=ts)["target_pr"], ax, title=f"{source} simulation precip", cmap=precip_cmap, norm=precip_norm, add_colorbar=False)
-            for sample_idx in range(len(ds["sample_id"].values)):
-                ax = axes[source_idx][1+sample_idx]
-                plot_grid(ds.sel(source=source, time=ts).isel(sample_id=sample_idx)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title=f"Sample precip")
+    for source in ds["source"].values:
+        IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
+        for ts in timestamps:
+            fig = plt.figure(figsize=(40, 5.5))
+            ax = fig.add_axes([0.05, 0.80, 0.9, 0.05])
+            cb = matplotlib.colorbar.ColorbarBase(ax, orientation='horizontal', cmap=precip_cmap, norm=precip_norm)
+            ax.set_xlabel("Precip (mm day-1)", fontsize=32)
+            ax.set_xticks(precip_clevs)
+            ax.tick_params(axis='both', which='major', labelsize=32)
+            plt.show()
+            for model in ds["model"].values:
+                IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
+                num_plots_per_ts = num_predictions+1 # plot each sample and true target pr
+                ncols = num_plots_per_ts
+                fig, axes = plt.subplots(1, ncols, figsize=(6*ncols, 6*1), constrained_layout=True, subplot_kw={'projection': cp_model_rotated_pole})
+                ax = axes[0]
+                plot_grid(ds.sel(source=source, time=ts)["target_pr"], ax, title=f"{source} simulation precip", cmap=precip_cmap, norm=precip_norm, add_colorbar=False)
+                for sample_idx in range(len(ds["sample_id"].values)):
+                    ax = axes[1+sample_idx]
+                    plot_grid(ds.sel(source=source, time=ts).isel(sample_id=sample_idx)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title=f"Sample precip")
 
         plt.show()
 
