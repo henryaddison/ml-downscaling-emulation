@@ -2,7 +2,7 @@ from contextlib import contextmanager
 import logging
 import os
 
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
