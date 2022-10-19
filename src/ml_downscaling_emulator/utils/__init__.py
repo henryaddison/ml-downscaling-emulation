@@ -1,44 +1,15 @@
 import glob
 import os
 
-import cartopy.crs as ccrs
 import IPython
 import matplotlib
 import matplotlib.pyplot as plt
-import metpy.plots.ctables
 import numpy as np
 import pandas as pd
 import scipy
 import xarray as xr
 
-cp_model_rotated_pole = ccrs.RotatedPole(pole_longitude=177.5, pole_latitude=37.5)
-platecarree = ccrs.PlateCarree()
-
-# precip_clevs = [0, 1, 2.5, 5, 7.5, 10, 15, 20, 30, 40,
-#      50, 70, 100, 150, 200, 250, 300, 400, 500, 600, 750, 1000]
-# precip_norm, precip_cmap = metpy.plots.ctables.registry.get_with_boundaries('precipitation', precip_clevs)
-precip_clevs = [0, 0.1, 1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 50, 70, 100, 150, 200]
-precip_cmap = matplotlib.colors.ListedColormap(metpy.plots.ctables.colortables["precipitation"][:len(precip_clevs)-1], 'precipitation')
-precip_norm = matplotlib.colors.BoundaryNorm(precip_clevs, precip_cmap.N)
-
-STYLES = {
-    "precip": {
-        "cmap": precip_cmap,
-        "norm": precip_norm
-    },
-    "logBlues": {
-        "cmap": "Blues",
-        "norm": matplotlib.colors.LogNorm()
-    }
-}
-
-def plot_grid(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
-    if style is not None:
-        kwargs = (STYLES[style] | kwargs)
-    da.plot.pcolormesh(ax=ax, add_colorbar=add_colorbar, **kwargs)
-    ax.set_title(title, fontsize=24)
-    ax.coastlines()
-    ax.gridlines(draw_labels={"bottom": "x", "left": "y"}, x_inline=False, y_inline=False, xlabel_style=dict(fontsize=24), ylabel_style=dict(fontsize=24))
+from ..plotting import cp_model_rotated_pole, precip_clevs, precip_norm, precip_cmap, plot_map as plot_grid, qq_plot
 
 def open_samples_ds(run_name, human_name, checkpoint_id, dataset_name, split):
     samples_filepath_pattern = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/checkpoint-{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
@@ -148,7 +119,7 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
         pred_pr = ds.sel(source=source)["pred_pr"]
         assert target_pr.isnull().sum().values == 0
         assert pred_pr.isnull().sum().values == 0
-        single_qq_plot(ax, target_pr, pred_pr, quantiles)
+        qq_plot(ax, target_pr, pred_pr, quantiles)
 
         for season, seasonal_ds in ds.groupby("time.season"):
             ax = axes[f"Quantiles {season}"]
@@ -159,23 +130,10 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
             if pred_pr.isnull().sum().values > 0:
                 print("MISSING VALUES FOR {season}. Skipping...")
                 continue
-            single_qq_plot(ax, target_pr, pred_pr, quantiles, title=f"Sample vs Target {season} quantiles")
+            qq_plot(ax, target_pr, pred_pr, quantiles, title=f"Sample vs Target {season} quantiles")
         plt.show()
 
-def single_qq_plot(ax, target_pr, pred_pr, quantiles, title="Sample vs Target quantiles"):
-    target_quantiles = target_pr.quantile(quantiles)
-    ideal_tr = target_quantiles.max().values+10 # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
 
-    ax.plot([0,ideal_tr], [0,ideal_tr], color="black", linestyle="--", label="Ideal")
-    for model in pred_pr["model"].values:
-        pred_quantiles = pred_pr.sel(model=model).chunk(dict(sample_id=-1)).quantile(quantiles)
-        ax.scatter(target_quantiles, pred_quantiles, label=f"{model}")
-
-    ax.set_xlabel("Target precip (mm day-1)")
-    ax.set_ylabel("Sample precip (mm day-1")
-    ax.set_title(title)
-    ax.legend()
-    ax.set_aspect(aspect=1)
 
     # fig.suptitle(figtitle, fontsize=32)
 
