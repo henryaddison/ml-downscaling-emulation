@@ -116,22 +116,21 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
         ax = axes["Quantiles"]
 
         target_pr = ds.sel(source="CPM")["target_pr"]
-        pred_pr = ds.sel(source=source)["pred_pr"]
-        assert target_pr.isnull().sum().values == 0
-        assert pred_pr.isnull().sum().values == 0
-        qq_plot(ax, target_pr, pred_pr, quantiles)
+        pred_prs = [ (ds["pred_pr"].sel(source=source, model=model), model) for model in ds["model"].values ]
+        # assert target_pr.isnull().sum().values == 0
+        # assert pred_pr.isnull().sum().values == 0
+        qq_plot(ax, target_pr, pred_prs, quantiles)
 
         for season, seasonal_ds in ds.groupby("time.season"):
             ax = axes[f"Quantiles {season}"]
             target_pr = seasonal_ds.sel(source="CPM")["target_pr"]
-            pred_pr = seasonal_ds.sel(source=source)["pred_pr"]
-            assert target_pr.isnull().sum().values == 0
-            assert pred_pr.isnull().sum().values == 0
-            if pred_pr.isnull().sum().values > 0:
-                print("MISSING VALUES FOR {season}. Skipping...")
-                continue
-            qq_plot(ax, target_pr, pred_pr, quantiles, title=f"Sample vs Target {season} quantiles")
-        plt.show()
+            # pred_pr = seasonal_ds.sel(source=source)["pred_pr"]
+            pred_prs = [ (seasonal_ds["pred_pr"].sel(source=source, model=model), model) for model in seasonal_ds["model"].values ]
+            # assert target_pr.isnull().sum().values == 0
+            # assert pred_pr.isnull().sum().values == 0
+
+            qq_plot(ax, target_pr, pred_prs, quantiles, title=f"Sample vs Target {season} quantiles")
+            plt.show()
 
 
 
