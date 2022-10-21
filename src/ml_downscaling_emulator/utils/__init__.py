@@ -146,17 +146,23 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
 
         target_pr = ds.sel(source="CPM")["target_pr"]
         pred_pr = ds.sel(source=source)["pred_pr"]
+        assert target_pr.isnull().sum().values == 0
+        assert pred_pr.isnull().sum().values == 0
         single_qq_plot(ax, target_pr, pred_pr, quantiles)
+
         for season, seasonal_ds in ds.groupby("time.season"):
             ax = axes[f"Quantiles {season}"]
             target_pr = seasonal_ds.sel(source="CPM")["target_pr"]
             pred_pr = seasonal_ds.sel(source=source)["pred_pr"]
-            if pred_pr.isnull().sum().values == 0:
+            assert target_pr.isnull().sum().values == 0
+            assert pred_pr.isnull().sum().values == 0
+            if pred_pr.isnull().sum().values > 0:
                 print("MISSING VALUES FOR {season}. Skipping...")
                 continue
-            single_qq_plot(ax, target_pr, pred_pr, quantiles)
+            single_qq_plot(ax, target_pr, pred_pr, quantiles, title=f"Sample vs Target {season} quantiles")
+        plt.show()
 
-def single_qq_plot(ax, target_pr, pred_pr, quantiles):
+def single_qq_plot(ax, target_pr, pred_pr, quantiles, title="Sample vs Target quantiles"):
     target_quantiles = target_pr.quantile(quantiles)
     ideal_tr = target_quantiles.max().values+10 # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
 
@@ -167,19 +173,20 @@ def single_qq_plot(ax, target_pr, pred_pr, quantiles):
 
     ax.set_xlabel("Target precip (mm day-1)")
     ax.set_ylabel("Sample precip (mm day-1")
-    ax.set_title("Sample vs Target quantiles")
+    ax.set_title(title)
     ax.legend()
     ax.set_aspect(aspect=1)
 
     # fig.suptitle(figtitle, fontsize=32)
-    plt.show()
+
 
 def plot_mean_bias(ds):
-    IPython.display.display_html(f"<h1>All</h1>", raw=True)
+    IPython.display.display_html(f"<h1>Bias/Target mean</h1>", raw=True)
+    IPython.display.display_html(f"<h2>All</h2>", raw=True)
     plot_single_mean_bias(ds)
 
     for season, seasonal_ds in ds.groupby('time.season'):
-        IPython.display.display_html(f"<h1>Season {season}</h1>", raw=True)
+        IPython.display.display_html(f"<h2>Season {season}</h2>", raw=True)
         plot_single_mean_bias(seasonal_ds)
 
 def plot_single_mean_bias(ds):
@@ -196,20 +203,20 @@ def plot_single_mean_bias(ds):
     bias_ratio_vmax = abs(bias_ratio).max().values
 
     for source in sample_mean["source"].values:
-        IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
+        IPython.display.display_html(f"<h3>{source}</h3>", raw=True)
 
-        IPython.display.display_html(f"<h2>Means</h2>", raw=True)
-        fig, axd = plt.subplot_mosaic([np.concatenate([["Target mean"], sample_mean["model"].values])], figsize=((len(sample_mean["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+        # IPython.display.display_html(f"<h2>Means</h2>", raw=True)
+        # fig, axd = plt.subplot_mosaic([np.concatenate([["Target mean"], sample_mean["model"].values])], figsize=((len(sample_mean["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+
+        # for model in sample_mean["model"].values:
+        #     ax = axd[model]
+        #     plot_grid(sample_mean.sel(source=source, model=model), ax, title=f"{model}", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
+        # plt.show()
+
+
+        fig, axd = plt.subplot_mosaic([np.concatenate([["Target mean"], bias_ratio["model"].values])], figsize=((len(bias_ratio["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
         ax = axd["Target mean"]
-        plot_grid(target_mean, ax, title="Target mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=False)
-        for model in sample_mean["model"].values:
-            ax = axd[model]
-            plot_grid(sample_mean.sel(source=source, model=model), ax, title=f"{model}", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
-        plt.show()
-
-        IPython.display.display_html(f"<h2>Bias/Target mean</h2>", raw=True)
-        fig, axd = plt.subplot_mosaic([np.concatenate([["Target bias ratio"], bias_ratio["model"].values])], figsize=((len(bias_ratio["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
-        axd["Target bias ratio"].axis("off")
+        plot_grid(target_mean, ax, title="Target mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
         for model in bias_ratio["model"].values:
             ax = axd[model]
             plot_grid(bias_ratio.sel(source=source, model=model), ax, title=f"{model}", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
