@@ -147,3 +147,16 @@ class XRDataset(Dataset):
         x = torch.tensor(np.stack([subds["target_pr"].values], axis=0)).float()
 
         return cond, x
+
+def build_input_transform(variables, img_size):
+  return ComposeT([
+        CropT(img_size),
+        Standardize(variables),
+        UnitRangeT(variables)])
+
+def build_target_transform(target_variables):
+  return ComposeT([
+        SqrtT(target_variables),
+        ClipT(target_variables),
+        UnitRangeT(target_variables),
+      ])
