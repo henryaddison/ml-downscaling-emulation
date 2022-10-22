@@ -116,7 +116,7 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
         ax = axes["Quantiles"]
 
         target_pr = ds.sel(source="CPM")["target_pr"]
-        pred_prs = [ (ds["pred_pr"].sel(source=source, model=model), model) for model in ds["model"].values ]
+        pred_prs = [ (model, ds["pred_pr"].sel(source=source, model=model)) for model in ds["model"].values ]
         # assert target_pr.isnull().sum().values == 0
         # assert pred_pr.isnull().sum().values == 0
         qq_plot(ax, target_pr, pred_prs, quantiles)
@@ -125,12 +125,12 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
             ax = axes[f"Quantiles {season}"]
             target_pr = seasonal_ds.sel(source="CPM")["target_pr"]
             # pred_pr = seasonal_ds.sel(source=source)["pred_pr"]
-            pred_prs = [ (seasonal_ds["pred_pr"].sel(source=source, model=model), model) for model in seasonal_ds["model"].values ]
+            pred_prs = [ (model, seasonal_ds["pred_pr"].sel(source=source, model=model)) for model in seasonal_ds["model"].values ]
             # assert target_pr.isnull().sum().values == 0
             # assert pred_pr.isnull().sum().values == 0
 
             qq_plot(ax, target_pr, pred_prs, quantiles, title=f"Sample vs Target {season} quantiles")
-            plt.show()
+        plt.show()
 
 
 
