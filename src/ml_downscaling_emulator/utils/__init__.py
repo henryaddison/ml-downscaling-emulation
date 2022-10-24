@@ -80,7 +80,7 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
         pred_pr = ds.sel(source=source)["pred_pr"]
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
 
-        fig, axes = plt.subplot_mosaic([["Density"]], figsize=(11, 5.5), constrained_layout=True)
+        fig, axes = plt.subplot_mosaic([["Density", "Quantiles"]], figsize=(16.5, 5.5), constrained_layout=True)
 
         ax = axes["Density"]
         hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
@@ -110,17 +110,16 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
             ax.text(0.7, 0.5, text, fontsize=8, transform=ax.transAxes)
         ax.legend()
         # ax.set_aspect(aspect=1)
-        plt.show()
-
-        fig, axes = plt.subplot_mosaic([["Quantiles", "Quantiles DJF", "Quantiles MAM", "Quantiles JJA", "Quantiles SON"]], figsize=(22, 5.5), constrained_layout=True)
-        ax = axes["Quantiles"]
 
         target_pr = ds.sel(source="CPM")["target_pr"]
         pred_prs = [ (model, ds["pred_pr"].sel(source=source, model=model)) for model in ds["model"].values ]
         # assert target_pr.isnull().sum().values == 0
         # assert pred_pr.isnull().sum().values == 0
+        ax = axes["Quantiles"]
         qq_plot(ax, target_pr, pred_prs, quantiles)
+        plt.show()
 
+        fig, axes = plt.subplot_mosaic([["Quantiles DJF", "Quantiles MAM", "Quantiles JJA", "Quantiles SON"]], figsize=(22, 5.5), constrained_layout=True)
         for season, seasonal_ds in ds.groupby("time.season"):
             ax = axes[f"Quantiles {season}"]
             target_pr = seasonal_ds.sel(source="CPM")["target_pr"]
