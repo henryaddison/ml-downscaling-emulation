@@ -48,7 +48,7 @@ def qq_plot(ax, x, ys, quantiles, title="Sample vs Target quantiles", xlabel="Ta
     ax.plot([ideal_bl, ideal_tr], [ideal_bl, ideal_tr], color="black", linestyle="--", label="Ideal")
     for (label, y) in ys:
         y_quantiles = y.quantile(quantiles)
-        ax.scatter(x_quantiles, y_quantiles, label=label)
+        ax.scatter(x_quantiles, y_quantiles, label=label, alpha=0.5, marker="x")
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
