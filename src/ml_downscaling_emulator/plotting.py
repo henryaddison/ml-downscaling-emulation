@@ -41,7 +41,7 @@ def plot_map(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
 
 def qq_plot(ax, x, ys, quantiles, title="Sample vs Target quantiles", xlabel="Target precip (mm day-1)", ylabel="Sample precip (mm day-1)"):
     x_quantiles = x.quantile(quantiles)
-    ideal_tr = x_quantiles.max().values # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
+    ideal_tr = max(x.max().values, *[y[1].max().values for y in ys]) # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
     ideal_tr = ideal_tr + 0.1*abs(ideal_tr)
     ideal_bl = x_quantiles.min().values # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
     ideal_bl = ideal_bl - 0.1*abs(ideal_bl) # max(target_quantiles.max().values+10, pred_quantiles.max().values+10)
