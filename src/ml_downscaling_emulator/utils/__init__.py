@@ -12,7 +12,7 @@ import xarray as xr
 from ..plotting import cp_model_rotated_pole, precip_clevs, precip_norm, precip_cmap, plot_map as plot_grid, qq_plot
 
 def open_samples_ds(run_name, human_name, checkpoint_id, dataset_name, split):
-    samples_filepath_pattern = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/checkpoint-{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
+    samples_filepath_pattern = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
     sample_ds_list = [ xr.open_dataset(sample_filepath) for sample_filepath in glob.glob(samples_filepath_pattern) ]
     # concatenate the samples along a new dimension
     ds = xr.concat(sample_ds_list, dim="sample_id")
