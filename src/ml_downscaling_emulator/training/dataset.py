@@ -154,13 +154,13 @@ class LogT():
 
   def transform(self, ds):
     for var in self.variables:
-      ds[var] = np.log(ds[var]+1)
+      ds[var] = np.log1p(ds[var])
 
     return ds
 
   def invert(self, ds):
     for var in self.variables:
-      ds[var] = ds[var].exp() - 1.0
+      ds[var] = np.expm1(ds[var])
 
     return ds
 
