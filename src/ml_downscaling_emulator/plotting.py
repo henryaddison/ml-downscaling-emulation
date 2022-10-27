@@ -35,9 +35,9 @@ def plot_map(da, ax, title="", style="logBlues", add_colorbar=False, **kwargs):
     if style is not None:
         kwargs = (STYLES[style] | kwargs)
     da.plot.pcolormesh(ax=ax, add_colorbar=add_colorbar, **kwargs)
-    ax.set_title(title, fontsize=24)
+    ax.set_title(title)
     ax.coastlines()
-    ax.gridlines(draw_labels={"bottom": "x", "left": "y"}, x_inline=False, y_inline=False, xlabel_style=dict(fontsize=24), ylabel_style=dict(fontsize=24))
+    # ax.gridlines(draw_labels={"bottom": "x", "left": "y"}, x_inline=False, y_inline=False)#, xlabel_style=dict(fontsize=24), ylabel_style=dict(fontsize=24))
 
 def qq_plot(ax, x, ys, quantiles, title="Sample vs Target quantiles", xlabel="Target precip (mm day-1)", ylabel="Sample precip (mm day-1)"):
     x_quantiles = x.quantile(quantiles)
