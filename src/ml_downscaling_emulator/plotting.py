@@ -24,9 +24,11 @@ STYLES = {
     }
 }
 
-def create_map_fig(grid_spec):
-    width = len(grid_spec[0])*5.5
-    height = len(grid_spec)*5.5
+def create_map_fig(grid_spec, width=None, height=None):
+    if width is None:
+        width = len(grid_spec[0])*5.5
+    if height is None:
+        height = len(grid_spec)*5.5
     subplot_kw=dict(projection=cp_model_rotated_pole)
     return plt.subplot_mosaic(grid_spec, figsize=(width, height), subplot_kw=subplot_kw, constrained_layout=True)
 
