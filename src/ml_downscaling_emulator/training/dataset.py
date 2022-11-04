@@ -7,7 +7,7 @@ class CropT():
   def __init__(self, size):
     self.size = size
 
-  def fit(self, train_ds):
+  def fit(self, target_ds, model_src_ds):
     return self
 
   def transform(self, ds):
@@ -17,9 +17,9 @@ class Standardize():
   def __init__(self, variables):
     self.variables = variables
 
-  def fit(self, train_ds):
-    self.means = { var:  train_ds[var].mean().values for var in self.variables }
-    self.stds = { var:  train_ds[var].std().values for var in self.variables }
+  def fit(self, target_ds, model_src_ds):
+    self.means = { var:  target_ds[var].mean().values for var in self.variables }
+    self.stds = { var:  target_ds[var].std().values for var in self.variables }
 
     return self
 
@@ -29,13 +29,13 @@ class Standardize():
 
     return ds
 
-class SpatialStandardize():
+class GlobalStandardize():
   def __init__(self, variables):
     self.variables = variables
 
-  def fit(self, train_ds):
-    self.means = { var:  train_ds[var].mean(dim=["time"]).values for var in self.variables }
-    self.stds = { var:  train_ds[var].std(dim=["time"]).values for var in self.variables }
+  def fit(self, target_ds, model_src_ds):
+    self.means = { var:  model_src_ds[var].mean().values for var in self.variables }
+    self.stds = { var:  model_src_ds[var].std().values for var in self.variables }
 
     return self
 
@@ -43,15 +43,60 @@ class SpatialStandardize():
     for var in self.variables:
       ds[var] = (ds[var] - self.means[var])/self.stds[var]
 
+    return ds
+
+
+class SpatialStandardize():
+  def __init__(self, variables):
+    self.variables = variables
+
+  def fit(self, target_ds, model_src_ds):
+    self.means = { var:  target_ds[var].mean(dim=["time"]).values for var in self.variables }
+    self.stds = { var:  target_ds[var].std(dim=["time"]).values for var in self.variables }
+
+    return self
+
+  def transform(self, ds):
+    for var in self.variables:
+      ds[var] = (ds[var] - self.means[var])/self.stds[var]
+
+    return ds
+
+class NoopT():
+  def fit(self, target_ds, model_src_ds):
+    return self
+
+  def transform(self, ds):
+    return ds
+
+  def invert(self, ds):
+    return ds
+
+class MassageStats():
+  def __init__(self, variables):
+    self.variables = variables
+
+  def fit(self, target_ds, model_src_ds):
+    self.target_means = { variable: target_ds[variable].mean(dim=["time"]) for variable in self.variables }
+    self.target_stds = { variable: target_ds[variable].std(dim=["time"]) for variable in self.variables }
+
+    self.model_src_means = { variable: model_src_ds[variable].mean(dim=["time"]) for variable in self.variables }
+    self.model_src_stds = { variable: model_src_ds[variable].std(dim=["time"]) for variable in self.variables }
+
+    return self
+
+  def transform(self, ds):
+    for variable in self.variables:
+      ds[variable] = (ds[variable] - self.target_means[variable])*(self.model_src_stds[variable]/self.target_stds[variable]) + self.model_src_means[variable]
     return ds
 
 class MinMax():
   def __init__(self, variables):
     self.variables = variables
 
-  def fit(self, train_ds):
-    self.maxs = { var:  train_ds[var].max().values for var in self.variables }
-    self.mins = { var:  train_ds[var].min().values for var in self.variables }
+  def fit(self, target_ds, model_src_ds):
+    self.maxs = { var:  target_ds[var].max().values for var in self.variables }
+    self.mins = { var:  target_ds[var].min().values for var in self.variables }
 
     return self
 
@@ -72,8 +117,8 @@ class UnitRangeT():
   def __init__(self, variables):
     self.variables = variables
 
-  def fit(self, train_ds):
-    self.maxs = { var:  train_ds[var].max().values for var in self.variables }
+  def fit(self, target_ds, model_src_ds):
+    self.maxs = { var:  target_ds[var].max().values for var in self.variables }
 
     return self
 
@@ -93,7 +138,7 @@ class ClipT():
   def __init__(self, variables):
     self.variables = variables
 
-  def fit(self, _train_ds):
+  def fit(self, target_ds, model_src_ds):
     return self
 
   def transform(self, ds):
@@ -110,7 +155,7 @@ class SqrtT():
   def __init__(self, variables):
     self.variables = variables
 
-  def fit(self, _train_ds):
+  def fit(self, target_ds, model_src_ds):
     return self
 
   def transform(self, ds):
@@ -130,7 +175,7 @@ class RootT():
     self.variables = variables
     self.root_base = root_base
 
-  def fit(self, _train_ds):
+  def fit(self, target_ds, model_src_ds):
     return self
 
   def transform(self, ds):
@@ -149,7 +194,7 @@ class LogT():
   def __init__(self, variables):
     self.variables = variables
 
-  def fit(self, _train_ds):
+  def fit(self, target_ds, model_src_ds):
     return self
 
   def transform(self, ds):
@@ -168,11 +213,11 @@ class ComposeT():
   def __init__(self, transforms):
     self.transforms = transforms
 
-  def fit_transform(self, train_ds):
+  def fit(self, target_ds, model_src_ds):
     for t in self.transforms:
-      train_ds = t.fit(train_ds).transform(train_ds)
+      target_ds = t.fit(target_ds, model_src_ds).transform(target_ds)
 
-    return train_ds
+    return target_ds
 
   def transform(self, ds):
     for t in self.transforms:
@@ -187,9 +232,10 @@ class ComposeT():
     return ds
 
 class XRDataset(Dataset):
-    def __init__(self, ds, variables):
+    def __init__(self, ds, variables, target_variables):
         self.ds = ds
         self.variables = variables
+        self.target_variables = target_variables
 
     def __len__(self):
         return len(self.ds.time)
@@ -199,27 +245,30 @@ class XRDataset(Dataset):
 
         cond = torch.tensor(np.stack([subds[var].values for var in self.variables], axis=0)).float()
 
-        x = torch.tensor(np.stack([subds["target_pr"].values], axis=0)).float()
+        x = torch.tensor(np.stack([subds[var].values for var in self.target_variables], axis=0)).float()
 
         return cond, x
 
-def build_input_transform(variables, img_size, key="v1"):
+def build_input_transform(variables, key="v1"):
   if key == "v1":
     return ComposeT([
-      CropT(img_size),
       Standardize(variables),
       UnitRangeT(variables)
     ])
 
   if key == "standardize":
     return ComposeT([
-      CropT(img_size),
       Standardize(variables)
+    ])
+
+  if key == "massage":
+    return ComposeT([
+      MassageStats(variables),
+      GlobalStandardize(variables),
     ])
 
   if key == "spatial":
     return ComposeT([
-      CropT(img_size),
       SpatialStandardize(variables)
     ])
 
