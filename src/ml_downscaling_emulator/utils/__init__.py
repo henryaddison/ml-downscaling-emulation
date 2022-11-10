@@ -240,3 +240,36 @@ def plot_psd(arg):
     # plt.tight_layout()
 
     plt.show()
+
+def pys_plot_psd(arg):
+    plt.figure(figsize=(12,12))
+    for label, precip_da in arg.items():
+        npix = precip_da["grid_latitude"].size
+        fourier_amplitudes = psd(precip_da.values.reshape(-1, npix, npix))
+
+        s1 = np.s_[-int(npix / 2) : int(npix / 2)]
+        s2 = np.s_[-int(npix / 2) : int(npix / 2)]
+        yc, xc = np.ogrid[s1, s2]
+
+        r_grid = np.sqrt(xc * xc + yc * yc).round()
+
+        r_range = np.arange(0, int(npix / 2))
+        freq = np.fft.fftfreq(npix)*npix
+        freq = freq[r_range]
+
+        pys_result = []
+        for r in r_range:
+            mask = r_grid == r
+            psd_vals = fourier_amplitudes[:, mask]
+            pys_result.append(np.mean(psd_vals))
+
+        mean_Abins = np.array(pys_result)
+
+        plt.loglog(freq, mean_Abins, label=label)
+
+    plt.legend()
+    plt.xlabel("$k$")
+    plt.ylabel("$P(k)$")
+    # plt.tight_layout()
+
+    plt.show()
