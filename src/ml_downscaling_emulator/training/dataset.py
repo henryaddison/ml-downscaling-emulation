@@ -217,7 +217,7 @@ class ComposeT():
     for t in self.transforms:
       target_ds = t.fit(target_ds, model_src_ds).transform(target_ds)
 
-    return target_ds
+    return self
 
   def transform(self, ds):
     for t in self.transforms:
