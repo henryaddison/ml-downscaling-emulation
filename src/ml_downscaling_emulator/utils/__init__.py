@@ -12,7 +12,7 @@ import xarray as xr
 from ..plotting import cp_model_rotated_pole, precip_clevs, precip_norm, precip_cmap, plot_map as plot_grid, qq_plot
 
 def open_samples_ds(run_name, human_name, checkpoint_id, dataset_name, split):
-    samples_filepath_pattern = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/checkpoint-{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
+    samples_filepath_pattern = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
     sample_ds_list = [ xr.open_dataset(sample_filepath) for sample_filepath in glob.glob(samples_filepath_pattern) ]
     # concatenate the samples along a new dimension
     ds = xr.concat(sample_ds_list, dim="sample_id")
@@ -48,31 +48,32 @@ def prep_eval_data(datasets, runs, split):
     return ds
 
 def show_samples(ds, timestamps):
-    num_predictions = len(ds["sample_id"])
-
-    for source in ds["source"].values:
-        IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
         for ts in timestamps:
-            fig = plt.figure(figsize=(40, 5.5))
-            ax = fig.add_axes([0.05, 0.80, 0.9, 0.05])
-            cb = matplotlib.colorbar.ColorbarBase(ax, orientation='horizontal', cmap=precip_cmap, norm=precip_norm)
-            ax.set_xlabel("Precip (mm day-1)", fontsize=32)
-            ax.set_xticks(precip_clevs)
-            ax.tick_params(axis='both', which='major', labelsize=32)
-            plt.show()
-            for model in ds["model"].values:
-                IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
-                num_plots_per_ts = num_predictions+1 # plot each sample and true target pr
-                ncols = num_plots_per_ts
-                fig, axes = plt.subplots(1, ncols, figsize=(6*ncols, 6*1), constrained_layout=True, subplot_kw={'projection': cp_model_rotated_pole})
-                ax = axes[0]
-                plot_grid(ds.sel(source=source, model=model, time=ts)["target_pr"], ax, title=f"{source} simulation precip", cmap=precip_cmap, norm=precip_norm, add_colorbar=False)
-                for sample_idx in range(len(ds["sample_id"].values)):
-                    ax = axes[1+sample_idx]
-                    plot_grid(ds.sel(source=source, model=model, time=ts).isel(sample_id=sample_idx)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title=f"Sample precip")
-                plt.show()
 
-        plt.show()
+            grid_spec = [ ["Target"] + [f"{model} Name"] + [ f"{model} Sample {sample_idx}" for sample_idx in range(len(ds["sample_id"])) ] for model in ds["model"].values ]
+            fig, axd = plt.subplot_mosaic(grid_spec, figsize=(12, 10), constrained_layout=True, subplot_kw={'projection': cp_model_rotated_pole})
+            fig.suptitle(f"Precip {ts}")
+
+            ax = axd[f"Target"]
+            plot_grid(ds.sel(time=ts).isel(model=0)["target_pr"], ax, title=f"Simulation", cmap=precip_cmap, norm=precip_norm, add_colorbar=False)
+
+            for model in ds["model"].values:
+                ax = axd[f"{model} Name"]
+                ax.text(x=0, y=0, s=model)
+                ax.set_axis_off()
+                for sample_idx in range(len(ds["sample_id"].values)):
+                    ax = axd[f"{model} Sample {sample_idx}"]
+                    plot_grid(ds.sel(model=model, time=ts).isel(sample_id=sample_idx)["pred_pr"], ax, cmap=precip_cmap, norm=precip_norm, add_colorbar=False, title=f"Sample")
+
+
+            ax = fig.add_axes([1.05, 0.0, 0.05, 0.95])
+            cb = matplotlib.colorbar.Colorbar(ax, cmap=precip_cmap, norm=precip_norm)
+            cb.ax.set_yticks(precip_clevs)
+            cb.ax.set_yticklabels(precip_clevs)
+            cb.ax.tick_params(axis='both', which='major')
+            cb.ax.set_ylabel("Precip (mm day-1)")
+
+            plt.show()
 
 def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
     target_pr = ds.sel(source="CPM")["target_pr"]
@@ -80,7 +81,7 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
         pred_pr = ds.sel(source=source)["pred_pr"]
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
 
-        fig, axes = plt.subplot_mosaic([["Density"]], figsize=(11, 5.5), constrained_layout=True)
+        fig, axes = plt.subplot_mosaic([["Density", "Quantiles"]], figsize=(16.5, 5.5), constrained_layout=True)
 
         ax = axes["Density"]
         hrange=(min(pred_pr.min().values, target_pr.min().values), max(pred_pr.max().values, target_pr.max().values))
@@ -110,27 +111,26 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
             ax.text(0.7, 0.5, text, fontsize=8, transform=ax.transAxes)
         ax.legend()
         # ax.set_aspect(aspect=1)
-        plt.show()
-
-        fig, axes = plt.subplot_mosaic([["Quantiles", "Quantiles DJF", "Quantiles MAM", "Quantiles JJA", "Quantiles SON"]], figsize=(22, 5.5), constrained_layout=True)
-        ax = axes["Quantiles"]
 
         target_pr = ds.sel(source="CPM")["target_pr"]
-        pred_prs = [ (ds["pred_pr"].sel(source=source, model=model), model) for model in ds["model"].values ]
+        pred_prs = [ (model, ds["pred_pr"].sel(source=source, model=model)) for model in ds["model"].values ]
         # assert target_pr.isnull().sum().values == 0
         # assert pred_pr.isnull().sum().values == 0
+        ax = axes["Quantiles"]
         qq_plot(ax, target_pr, pred_prs, quantiles)
+        plt.show()
 
+        fig, axes = plt.subplot_mosaic([["Quantiles DJF", "Quantiles MAM", "Quantiles JJA", "Quantiles SON"]], figsize=(22, 5.5), constrained_layout=True)
         for season, seasonal_ds in ds.groupby("time.season"):
             ax = axes[f"Quantiles {season}"]
             target_pr = seasonal_ds.sel(source="CPM")["target_pr"]
             # pred_pr = seasonal_ds.sel(source=source)["pred_pr"]
-            pred_prs = [ (seasonal_ds["pred_pr"].sel(source=source, model=model), model) for model in seasonal_ds["model"].values ]
+            pred_prs = [ (model, seasonal_ds["pred_pr"].sel(source=source, model=model)) for model in seasonal_ds["model"].values ]
             # assert target_pr.isnull().sum().values == 0
             # assert pred_pr.isnull().sum().values == 0
 
             qq_plot(ax, target_pr, pred_prs, quantiles, title=f"Sample vs Target {season} quantiles")
-            plt.show()
+        plt.show()
 
 
 

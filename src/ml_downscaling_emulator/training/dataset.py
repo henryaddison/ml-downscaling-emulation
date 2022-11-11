@@ -29,6 +29,22 @@ class Standardize():
 
     return ds
 
+class SpatialStandardize():
+  def __init__(self, variables):
+    self.variables = variables
+
+  def fit(self, train_ds):
+    self.means = { var:  train_ds[var].mean(dim=["time"]).values for var in self.variables }
+    self.stds = { var:  train_ds[var].std(dim=["time"]).values for var in self.variables }
+
+    return self
+
+  def transform(self, ds):
+    for var in self.variables:
+      ds[var] = (ds[var] - self.means[var])/self.stds[var]
+
+    return ds
+
 class MinMax():
   def __init__(self, variables):
     self.variables = variables
@@ -109,6 +125,45 @@ class SqrtT():
 
     return ds
 
+class RootT():
+  def __init__(self, variables, root_base):
+    self.variables = variables
+    self.root_base = root_base
+
+  def fit(self, _train_ds):
+    return self
+
+  def transform(self, ds):
+    for var in self.variables:
+      ds[var] = np.power(ds[var], 1/self.root_base)
+
+    return ds
+
+  def invert(self, ds):
+    for var in self.variables:
+      ds[var] = np.power(ds[var], self.root_base)
+
+    return ds
+
+class LogT():
+  def __init__(self, variables):
+    self.variables = variables
+
+  def fit(self, _train_ds):
+    return self
+
+  def transform(self, ds):
+    for var in self.variables:
+      ds[var] = np.log1p(ds[var])
+
+    return ds
+
+  def invert(self, ds):
+    for var in self.variables:
+      ds[var] = np.expm1(ds[var])
+
+    return ds
+
 class ComposeT():
   def __init__(self, transforms):
     self.transforms = transforms
@@ -147,3 +202,59 @@ class XRDataset(Dataset):
         x = torch.tensor(np.stack([subds["target_pr"].values], axis=0)).float()
 
         return cond, x
+
+def build_input_transform(variables, img_size, key="v1"):
+  if key == "v1":
+    return ComposeT([
+      CropT(img_size),
+      Standardize(variables),
+      UnitRangeT(variables)
+    ])
+
+  if key == "standardize":
+    return ComposeT([
+      CropT(img_size),
+      Standardize(variables)
+    ])
+
+  if key == "spatial":
+    return ComposeT([
+      CropT(img_size),
+      SpatialStandardize(variables)
+    ])
+
+  raise(f"Unknown input transform {key}")
+
+def build_target_transform(target_variables, key="v1"):
+  if key == "v1":
+    return ComposeT([
+      SqrtT(target_variables),
+      ClipT(target_variables),
+      UnitRangeT(target_variables),
+    ])
+
+  if key == "sqrt":
+    return ComposeT([
+      RootT(target_variables, 2),
+      ClipT(target_variables),
+    ])
+
+  if key == "cbrt":
+    return ComposeT([
+      RootT(target_variables, 3),
+      ClipT(target_variables),
+    ])
+
+  if key == "qdrt":
+    return ComposeT([
+      RootT(target_variables, 4),
+      ClipT(target_variables),
+    ])
+
+  if key == "log":
+    return ComposeT([
+      LogT(target_variables),
+      ClipT(target_variables),
+    ])
+
+  raise(f"Unknown input transform {key}")
