@@ -213,7 +213,7 @@ class ComposeT():
   def __init__(self, transforms):
     self.transforms = transforms
 
-  def fit(self, target_ds, model_src_ds):
+  def fit(self, target_ds, model_src_ds=None):
     for t in self.transforms:
       target_ds = t.fit(target_ds, model_src_ds).transform(target_ds)
 
