@@ -274,6 +274,13 @@ def build_input_transform(variables, key="v1"):
       GlobalStandardize(variables),
     ])
 
+  if key == "massagev2":
+    return ComposeT([
+      MassageStats(variables),
+      GlobalStandardize(variables),
+      UnitRangeT(variables),
+    ])
+
   if key == "spatial":
     return ComposeT([
       SpatialStandardize(variables)
@@ -293,6 +300,20 @@ def build_target_transform(target_variables, key="v1"):
     return ComposeT([
       RootT(target_variables, 2),
       ClipT(target_variables),
+    ])
+
+  if key == "sqrtur":
+    return ComposeT([
+      RootT(target_variables, 2),
+      ClipT(target_variables),
+      UnitRangeT(target_variables),
+    ])
+
+  if key == "cbrtur":
+    return ComposeT([
+      RootT(target_variables, 3),
+      ClipT(target_variables),
+      UnitRangeT(target_variables),
     ])
 
   if key == "cbrt":
