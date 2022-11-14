@@ -198,7 +198,7 @@ def plot_single_std_bias(ds):
     vmin = target_std.min().values
     vmax = target_std.max().values
 
-    std_ratio_vmax = abs(std_ratio).max().values
+    std_ratio_vmax = 1+(abs(1-std_ratio).max().values)
 
     for source in sample_std["source"].values:
         IPython.display.display_html(f"<h3>{source}</h3>", raw=True)
