@@ -36,24 +36,7 @@ class Standardize():
 
     return ds
 
-class GlobalStandardize():
-  def __init__(self, variables):
-    self.variables = variables
-
-  def fit(self, target_ds, model_src_ds):
-    self.means = { var:  model_src_ds[var].mean().values for var in self.variables }
-    self.stds = { var:  model_src_ds[var].std().values for var in self.variables }
-
-    return self
-
-  def transform(self, ds):
-    for var in self.variables:
-      ds[var] = (ds[var] - self.means[var])/self.stds[var]
-
-    return ds
-
-
-class SpatialStandardize():
+class PixelStandardize():
   def __init__(self, variables):
     self.variables = variables
 
@@ -79,22 +62,42 @@ class NoopT():
   def invert(self, ds):
     return ds
 
-class MassageStats():
+class PixelMatchModelSrcStandardize():
   def __init__(self, variables):
     self.variables = variables
 
   def fit(self, target_ds, model_src_ds):
-    self.target_means = { variable: target_ds[variable].mean(dim=["time"]) for variable in self.variables }
-    self.target_stds = { variable: target_ds[variable].std(dim=["time"]) for variable in self.variables }
+    self.pixel_target_means = { variable: target_ds[variable].mean(dim=["time"]) for variable in self.variables }
+    self.pixel_target_stds = { variable: target_ds[variable].std(dim=["time"]) for variable in self.variables }
 
-    self.model_src_means = { variable: model_src_ds[variable].mean(dim=["time"]) for variable in self.variables }
-    self.model_src_stds = { variable: model_src_ds[variable].std(dim=["time"]) for variable in self.variables }
+    self.pixel_model_src_means = { variable: model_src_ds[variable].mean(dim=["time"]) for variable in self.variables }
+    self.pixel_model_src_stds = { variable: model_src_ds[variable].std(dim=["time"]) for variable in self.variables }
+
+    self.global_model_src_means = { var:  model_src_ds[var].mean().values for var in self.variables }
+    self.global_model_src_stds = { var:  model_src_ds[var].std().values for var in self.variables }
 
     return self
 
   def transform(self, ds):
     for variable in self.variables:
-      ds[variable] = (ds[variable] - self.target_means[variable])*(self.model_src_stds[variable]/self.target_stds[variable]) + self.model_src_means[variable]
+      # first standardize each pixel
+      da_pixel_stan = (ds[variable] - self.pixel_target_means[variable])/self.pixel_target_stds[variable]
+      # then match mean and variance of each pixel to model source distribution
+      da_pixel_like_model_src = (da_pixel_stan * self.pixel_model_src_stds[variable]) + self.pixel_model_src_means[variable]
+      # finally standardize globally (assuming a model source distribution)
+      da_global_stan_like_model_src = (da_pixel_like_model_src - self.global_model_src_means[variable]) / self.global_model_src_stds[variable]
+      ds[variable] = da_global_stan_like_model_src
+    return ds
+
+  def transform(self, ds):
+    for variable in self.variables:
+      # first standardize each pixel
+      da_pixel_stan = (ds[variable] - self.pixel_target_means[variable])/self.pixel_target_stds[variable]
+      # then match mean and variance of each pixel to model source distribution
+      da_pixel_like_model_src = (da_pixel_stan * self.pixel_model_src_stds[variable]) + self.pixel_model_src_means[variable]
+      # finally standardize globally (assuming a model source distribution)
+      da_global_stan_like_model_src = (da_pixel_like_model_src - self.global_model_src_means[variable]) / self.global_model_src_stds[variable]
+      ds[variable] = da_global_stan_like_model_src
     return ds
 
 class MinMax():
@@ -268,22 +271,20 @@ def build_input_transform(variables, key="v1"):
       Standardize(variables)
     ])
 
-  if key == "massage":
+  if key == "pixelstan":
     return ComposeT([
-      MassageStats(variables),
-      GlobalStandardize(variables),
+      PixelStandardize(variables)
     ])
 
-  if key == "massagev2":
+  if key == "pixelmmsstan":
     return ComposeT([
-      MassageStats(variables),
-      GlobalStandardize(variables),
+      PixelMatchModelSrcStandardize(variables),
+    ])
+
+  if key == "pixelmmsstanur":
+    return ComposeT([
+      PixelMatchModelSrcStandardize(variables),
       UnitRangeT(variables),
-    ])
-
-  if key == "spatial":
-    return ComposeT([
-      SpatialStandardize(variables)
     ])
 
   raise(f"Unknown input transform {key}")
