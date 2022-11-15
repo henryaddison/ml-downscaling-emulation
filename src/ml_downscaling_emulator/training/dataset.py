@@ -200,6 +200,26 @@ class RootT():
 
     return ds
 
+class RawMomentT():
+  def __init__(self, variables, root_base):
+    self.variables = variables
+    self.root_base = root_base
+
+  def fit(self, target_ds, model_src_ds):
+    self.raw_moments = { var: np.power(np.mean(np.power(target_ds[var], self.root_base)), 1/self.root_base) for var in self.variables }
+
+  def transform(self, ds):
+    for var in self.variables:
+      ds[var] = ds[var]/self.raw_moments[var]
+
+    return ds
+
+  def invert(self, ds):
+    for var in self.variables:
+      ds[var] = ds[var]*self.raw_moments[var]
+
+    return ds
+
 class LogT():
   def __init__(self, variables):
     self.variables = variables
