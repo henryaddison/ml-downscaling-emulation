@@ -330,17 +330,24 @@ def build_target_transform(target_variables, key="v1"):
       UnitRangeT(target_variables),
     ])
 
-  if key == "cbrtur":
+  if key == "sqrtrm":
     return ComposeT([
-      RootT(target_variables, 3),
+      RootT(target_variables, 2),
+      RawMomentT(target_variables, 2),
       ClipT(target_variables),
-      UnitRangeT(target_variables),
     ])
 
   if key == "cbrt":
     return ComposeT([
       RootT(target_variables, 3),
       ClipT(target_variables),
+    ])
+
+  if key == "cbrtur":
+    return ComposeT([
+      RootT(target_variables, 3),
+      ClipT(target_variables),
+      UnitRangeT(target_variables),
     ])
 
   if key == "qdrt":
