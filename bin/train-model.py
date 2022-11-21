@@ -60,14 +60,14 @@ if __name__ == '__main__':
         model_opts = dict(kernel_size=31, padding=15)
         model = nn.Conv2d(num_predictors, 1, **model_opts).to(device=device)
     else:
-        raise("Unknown architecture")
+        raise RuntimeError("Unknown architecture")
 
     if args.loss == 'l1':
         criterion = torch.nn.L1Loss().to(device)
     elif args.loss == 'mse':
         criterion = torch.nn.MSELoss().to(device)
     else:
-        raise("Unknown loss function")
+        raise RuntimeError("Unknown loss function")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
