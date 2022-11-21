@@ -307,7 +307,7 @@ def build_input_transform(variables, key="v1"):
       UnitRangeT(variables),
     ])
 
-  raise(f"Unknown input transform {key}")
+  raise RuntimeError(f"Unknown input transform {key}")
 
 def build_target_transform(target_variables, key="v1"):
   if key == "v1":
@@ -362,7 +362,7 @@ def build_target_transform(target_variables, key="v1"):
       ClipT(target_variables),
     ])
 
-  raise(f"Unknown input transform {key}")
+  raise RuntimeError(f"Unknown input transform {key}")
 
 def get_variables(dataset_name):
   data_dirpath = os.path.join(os.getenv('DERIVED_DATA'), 'moose', 'nc-datasets', dataset_name)
