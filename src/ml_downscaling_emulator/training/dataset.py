@@ -208,6 +208,8 @@ class RawMomentT():
   def fit(self, target_ds, model_src_ds):
     self.raw_moments = { var: np.power(np.mean(np.power(target_ds[var], self.root_base)), 1/self.root_base) for var in self.variables }
 
+    return self
+
   def transform(self, ds):
     for var in self.variables:
       ds[var] = ds[var]/self.raw_moments[var]
