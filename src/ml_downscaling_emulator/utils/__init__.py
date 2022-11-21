@@ -132,7 +132,17 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
             qq_plot(ax, target_pr, pred_prs, quantiles, title=f"Sample vs Target {season} quantiles")
         plt.show()
 
+        fig, axd = plt.subplot_mosaic([pred_pr["model"].values], figsize=(22, 5.5), constrained_layout=True)
+        for model in pred_pr["model"].values:
+            tr = max(ds["pred_pr"].max(), ds["target_pr"].max())
 
+            ax = axd[model]
+
+            ax.scatter(x=ds.sel(source=source, model=model)["pred_pr"], y=ds.sel(source=source, model=model)["target_pr"].values[None, :].repeat(len(ds.sel(source=source, model=model)["sample_id"]), 0), alpha=0.05)
+            ax.plot([0, tr], [0, tr], linewidth=1, color="black", linestyle="--", label="Ideal")
+            ax.set_title(f"{model}")
+            ax.set_aspect(aspect=1)
+        plt.show()
 
     # fig.suptitle(figtitle, fontsize=32)
 
@@ -162,15 +172,6 @@ def plot_single_mean_bias(ds):
     for source in sample_mean["source"].values:
         IPython.display.display_html(f"<h3>{source}</h3>", raw=True)
 
-        # IPython.display.display_html(f"<h2>Means</h2>", raw=True)
-        # fig, axd = plt.subplot_mosaic([np.concatenate([["Target mean"], sample_mean["model"].values])], figsize=((len(sample_mean["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
-
-        # for model in sample_mean["model"].values:
-        #     ax = axd[model]
-        #     plot_grid(sample_mean.sel(source=source, model=model), ax, title=f"{model}", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
-        # plt.show()
-
-
         fig, axd = plt.subplot_mosaic([np.concatenate([["Target mean"], bias_ratio["model"].values])], figsize=((len(bias_ratio["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
         ax = axd["Target mean"]
         plot_grid(target_mean, ax, title="Target mean", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
@@ -179,35 +180,36 @@ def plot_single_mean_bias(ds):
             plot_grid(bias_ratio.sel(source=source, model=model), ax, title=f"{model}", norm=None, cmap="BrBG", vmax=bias_ratio_vmax, center=0, add_colorbar=True)
         plt.show()
 
+
 def plot_std(ds):
+    IPython.display.display_html(f"<h1>$\sigma_{{sample}}$/$\sigma_{{CPM}}$</h1>", raw=True)
+    IPython.display.display_html(f"<h2>All</h2>", raw=True)
+    plot_single_std_bias(ds)
+
+    for season, seasonal_ds in ds.groupby('time.season'):
+        IPython.display.display_html(f"<h2>Season {season}</h2>", raw=True)
+        plot_single_std_bias(seasonal_ds)
+
+def plot_single_std_bias(ds):
     target_std = ds['target_pr'].sel(source="CPM").std(dim="time")
     sample_std = ds['pred_pr'].std(dim=["sample_id", "time"])
     std_ratio = sample_std/target_std
 
-    vmin = min([da.min().values for da in [sample_std, target_std]])
-    vmax = max([da.max().values for da in [sample_std, target_std]])
+    vmin = target_std.min().values
+    vmax = target_std.max().values
 
-    ratio_vmax = max(2-(std_ratio.min().values), std_ratio.max().values)
+    std_ratio_vmax = 1+(abs(1-std_ratio).max().values)
 
     for source in sample_std["source"].values:
-        IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
-        for model in sample_std["model"].values:
-            IPython.display.display_html(f"<h2>{model}</h2>", raw=True)
+        IPython.display.display_html(f"<h3>{source}</h3>", raw=True)
 
-            fig, axs = plt.subplots(1, 3, figsize=(20, 6), subplot_kw=dict(projection=cp_model_rotated_pole))
-
-            ax = axs[0]
-            plot_grid(sample_std.sel(source=source, model=model), ax, title="Sample std", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True, cmap="viridis")
-
-            ax = axs[1]
-            plot_grid(target_std, ax, title="Target pr std", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True, cmap="viridis")
-
-            ax = axs[2]
-            plot_grid(std_ratio.sel(source=source, model=model), ax, title="Sample/Target pr std", norm=None, cmap="BrBG", vmax=ratio_vmax, center=1, add_colorbar=True)
-
-            plt.show()
-
-
+        fig, axd = plt.subplot_mosaic([np.concatenate([["$\sigma_{CPM}$"], std_ratio["model"].values])], figsize=((len(std_ratio["model"].values)+1)*5.5, 5.5), subplot_kw=dict(projection=cp_model_rotated_pole), constrained_layout=True)
+        ax = axd["$\sigma_{CPM}$"]
+        plot_grid(target_std, ax, title="$\sigma_{CPM}$", norm=None, vmin=vmin, vmax=vmax, add_colorbar=True)
+        for model in std_ratio["model"].values:
+            ax = axd[model]
+            plot_grid(std_ratio.sel(source=source, model=model), ax, title=f"{model}", norm=None, cmap="BrBG", vmax=std_ratio_vmax, center=1, add_colorbar=True)
+        plt.show()
 
 def psd(batch):
     npix = batch.shape[1]
