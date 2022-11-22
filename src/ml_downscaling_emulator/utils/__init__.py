@@ -14,6 +14,8 @@ from ..plotting import cp_model_rotated_pole, precip_clevs, precip_norm, precip_
 def open_samples_ds(run_name, human_name, checkpoint_id, dataset_name, split):
     samples_filepath_pattern = os.path.join(os.getenv("DERIVED_DATA"), 'score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous', run_name, f'samples/{checkpoint_id}', dataset_name, split, 'predictions-*.nc')
     sample_ds_list = [ xr.open_dataset(sample_filepath) for sample_filepath in glob.glob(samples_filepath_pattern) ]
+    if len(sample_ds_list) == 0:
+        raise RuntimeError(f"{run_name} has no sample files")
     # concatenate the samples along a new dimension
     ds = xr.concat(sample_ds_list, dim="sample_id")
     # add a model dimension so can compare data from different ml models
