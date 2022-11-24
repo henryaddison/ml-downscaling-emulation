@@ -293,6 +293,12 @@ def build_input_transform(variables, key="v1"):
       Standardize(variables)
     ])
 
+  if key == "stanur":
+    return ComposeT([
+      Standardize(variables),
+      UnitRangeT(variables),
+    ])
+
   if key == "pixelstan":
     return ComposeT([
       PixelStandardize(variables)
