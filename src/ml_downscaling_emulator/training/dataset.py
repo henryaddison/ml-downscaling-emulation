@@ -288,7 +288,7 @@ def build_input_transform(variables, key="v1"):
       UnitRangeT(variables)
     ])
 
-  if key == "standardize":
+  if key in ["standardize", "stan"]:
     return ComposeT([
       Standardize(variables)
     ])
