@@ -35,9 +35,9 @@ logger.setLevel('INFO')
 def main(
         workdir: Path,
         dataset: str = typer.Option(...),
-        epochs: int = typer.Option(...),
-        learning_rate: float = typer.Option(...),
-        batch_size: int = typer.Option(...),
+        epochs: int = 200,
+        learning_rate: float = 2e-4,
+        batch_size: int = 64,
         snapshot_freq: int = 25,
         input_transform_key: str = "v1",
         target_transform_key: str = "v1",
