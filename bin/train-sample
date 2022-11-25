@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+# setup jobs for training and then sampling from a model
+
+set -euo pipefail
+
+model_run_id=$1
+cpm_dataset=$2
+gcm_dataset=$3
+shift 3
+# Add any other config on the commandline for training
+# --config.data.input_transform_key=spatial
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+set -x
+
+# train
+
+training_job_id=$(${SCRIPT_DIR}/queue-training ${model_run_id} ${cpm_dataset} $@)
+echo ${training_job_id}
+
+# sample
+
+${SCRIPT_DIR}/queue-sampling ${model_run_id} ${cpm_dataset} ${gcm_dataset} ${training_job_id}

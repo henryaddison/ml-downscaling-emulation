@@ -2,5 +2,20 @@
 
 set -euo pipefail
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+dataset="bham_gcmx-4x_spechum-temp-vort_random"
+workdir="output/test/unet"
+
+map_features=1
+train_batch_size=2
+
 rm -rf output/test
-python train-model.py --data "${DERIVED_DATA}/moose/nc-datasets/2.2km-coarsened-8x_london_vorticity850_random-sample" --architecture u-net --batch-size 32 --model output/test
+python ${SCRIPT_DIR}/train-model.py ${workdir} --dataset ${dataset} --batch-size ${train_batch_size} --learning-rate 1e-4 --epochs=2
+
+epoch=2
+num_samples=2
+eval_batchsize=128
+
+rm -rf "${workdir}/samples/epoch-${epoch}/${dataset}"
+mlde evaluate sample ${workdir} --dataset ${dataset} --epoch ${epoch} --batch-size ${eval_batchsize} --num-samples ${num_samples}
