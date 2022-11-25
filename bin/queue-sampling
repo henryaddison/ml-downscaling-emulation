@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+# setup jobs for sampling from a model
+
+set -euo pipefail
+
+sampling_jobs=3
+samples_per_job=1
+sampling_duration=$((18*samples_per_job))
+
+model_run_id=$1
+epoch=200
+cpm_dataset=$2
+gcm_dataset=$3
+if [ ! -z "${4:-}" ]; then
+  dependency_opt="-d ${4}"
+else
+  dependency_opt=""
+fi
+batch_size=1024
+
+workdir=/user/work/vf20964/u-net/workdirs/${model_run_id}
+
+set -x
+
+# sample CPM
+
+lbatch ${dependency_opt} -g 1 -m 16 -q gpu,cnu -t ${sampling_duration} --condaenv cuda-downscaling --array 1-${sampling_jobs} -- mlde evaluate sample --epoch ${epoch} --num-samples 1 --dataset ${cpm_dataset} ${workdir} --batch-size ${batch_size}
+
+# sample GCM
+
+lbatch ${dependency_opt} -g 1 -m 16 -q gpu,cnu -t ${sampling_duration} --condaenv cuda-downscaling --array 1-${sampling_jobs} -- mlde evaluate sample --epoch ${epoch} --num-samples 1 --dataset ${gcm_dataset} ${workdir} --batch-size ${batch_size}

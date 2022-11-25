@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+# setup jobs for training a model
+
+set -euo pipefail
+
+model_run_id=$1
+cpm_dataset=$2
+shift 2
+# Add any other config on the commandline for training
+# --input_transform_key=stan
+
+epochs=200
+learning_rate=1e-4
+batch_size=1024
+
+training_duration=36
+
+workdir=/user/work/vf20964/u-net/workdirs/${model_run_id}
+
+set -x
+
+# train
+
+lbatch -g 1 -m 16 -q gpu,cnu -t ${training_duration} --condaenv cuda-downscaling -- python bin/train-model.py ${workdir} --dataset=${cpm_dataset} --epochs ${epochs} --learning-rate ${learning_rate} --batch-size ${batch_size} $@
