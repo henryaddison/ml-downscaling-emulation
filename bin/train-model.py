@@ -17,7 +17,7 @@ from ml_downscaling_emulator.training.dataset import get_dataset
 
 UNET_ARCHNAME = "u-net"
 SIMPLE_CONV_ARCHNAME = "simple-conv"
-EXPERIMENT_NAME="ml-downscaling-emulator"
+EXPERIMENT_NAME=os.getenv("WANDB_EXPERIMENT_NAME")
 TAGS = {
     UNET_ARCHNAME: ["baseline", UNET_ARCHNAME],
     SIMPLE_CONV_ARCHNAME: ["baseline", SIMPLE_CONV_ARCHNAME, "debug"]

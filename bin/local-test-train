@@ -11,7 +11,7 @@ map_features=1
 train_batch_size=2
 
 rm -rf output/test
-python ${SCRIPT_DIR}/train-model.py ${workdir} --dataset ${dataset} --batch-size ${train_batch_size} --learning-rate 1e-4 --epochs=2
+WANDB_EXPERIMENT_NAME="test" python ${SCRIPT_DIR}/train-model.py ${workdir} --dataset ${dataset} --batch-size ${train_batch_size} --learning-rate 1e-4 --epochs=2
 
 epoch=2
 num_samples=2
