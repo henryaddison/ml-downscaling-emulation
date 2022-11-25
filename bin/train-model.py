@@ -50,7 +50,6 @@ def main(
         batch_size = batch_size,
         epochs=epochs,
         architecture = "u-net",
-        model_opts = model_opts,
         loss = "MSELoss",
         optimizer = "Adam",
         device = ('cuda' if torch.cuda.is_available() else 'cpu'),
@@ -96,7 +95,6 @@ def main(
 
     # Setup model, loss and optimiser
     num_predictors, _, _ = train_dl.dataset[0][0].shape
-    model_opts = {}
     model = unet.UNet(num_predictors, 1).to(device=device)
     if run_config["loss"] == "MSELoss":
         criterion = torch.nn.MSELoss().to(device)
