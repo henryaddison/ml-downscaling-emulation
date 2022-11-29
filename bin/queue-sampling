@@ -18,7 +18,7 @@ else
 fi
 batch_size=1024
 
-workdir=/user/work/vf20964/u-net/workdirs/${model_run_id}
+workdir=${DERIVED_DATA}/workdirs/u-net/${model_run_id}
 
 set -x
 

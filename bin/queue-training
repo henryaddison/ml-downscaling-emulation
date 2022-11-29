@@ -11,7 +11,7 @@ shift 2
 
 training_duration=36
 
-workdir=/user/work/vf20964/u-net/workdirs/${model_run_id}
+workdir=${DERIVED_DATA}/workdirs/u-net/${model_run_id}
 
 set -x
 
