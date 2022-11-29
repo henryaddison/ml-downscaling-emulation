@@ -25,7 +25,7 @@ def open_samples_ds(run_name, human_name, checkpoint_id, dataset_name, split):
 def merge_over_runs(runs, dataset_name, split):
     num_samples = 3
     samples_ds = xr.merge([
-        open_samples_ds(run_name, human_name, checkpoint_id, dataset_name, split).sel(sample_id=range(num_samples)) for run_name, checkpoint_id, human_name in runs
+        open_samples_ds(run_name, human_name, checkpoint_id, dataset_name, split).isel(sample_id=range(num_samples)) for run_name, checkpoint_id, human_name in runs
     ])
     eval_ds = xr.open_dataset(os.path.join(os.getenv("MOOSE_DERIVED_DATA"), "nc-datasets", dataset_name, f"{split}.nc"))
 
