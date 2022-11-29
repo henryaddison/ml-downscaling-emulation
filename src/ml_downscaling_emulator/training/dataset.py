@@ -161,6 +161,26 @@ class ClipT():
 
     return ds
 
+class RecentreT():
+  def __init__(self, variables):
+    self.variables = variables
+
+  def fit(self, target_ds, model_src_ds):
+    return self
+
+  def transform(self, ds):
+    for var in self.variables:
+      ds[var] = ds[var]*2. + 1.
+
+    return ds
+
+  def invert(self, ds):
+    for var in self.variables:
+      ds[var] = (ds[var] + 1.) / 2.
+
+    return ds
+
+
 class SqrtT():
   def __init__(self, variables):
     self.variables = variables
@@ -299,6 +319,13 @@ def build_input_transform(variables, key="v1"):
       UnitRangeT(variables),
     ])
 
+  if key == "stanurrecen":
+    return ComposeT([
+      Standardize(variables),
+      UnitRangeT(variables),
+      RecentreT(variables),
+    ])
+
   if key == "pixelstan":
     return ComposeT([
       PixelStandardize(variables)
@@ -336,6 +363,14 @@ def build_target_transform(target_variables, key="v1"):
       RootT(target_variables, 2),
       ClipT(target_variables),
       UnitRangeT(target_variables),
+    ])
+
+  if key == "sqrturrecen":
+    return ComposeT([
+      RootT(target_variables, 2),
+      ClipT(target_variables),
+      UnitRangeT(target_variables),
+      RecentreT(target_variables),
     ])
 
   if key == "sqrtrm":
