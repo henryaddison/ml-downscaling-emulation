@@ -170,7 +170,7 @@ class RecentreT():
 
   def transform(self, ds):
     for var in self.variables:
-      ds[var] = ds[var]*2. + 1.
+      ds[var] = ds[var]*2. - 1.
 
     return ds
 
