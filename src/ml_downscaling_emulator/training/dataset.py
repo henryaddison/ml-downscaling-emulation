@@ -419,11 +419,9 @@ def get_variables(dataset_name):
 
 def create_transform(variables, active_dataset_name, model_src_dataset_name, transform_key, builder, store_path):
   logging.info(f"Fitting transform")
-  model_src_dataset_dirpath = os.path.join(os.getenv('DERIVED_DATA'), 'moose', 'nc-datasets', model_src_dataset_name)
-  model_src_training_split = xr.load_dataset(os.path.join(model_src_dataset_dirpath, 'train.nc'))
+  model_src_training_split = load_raw_dataset_split(model_src_dataset_name,"train")
 
-  active_dataset_dirpath = os.path.join(os.getenv('DERIVED_DATA'), 'moose', 'nc-datasets', active_dataset_name)
-  active_dataset_training_split = xr.load_dataset(os.path.join(active_dataset_dirpath, 'train.nc'))
+  active_dataset_training_split = load_raw_dataset_split(active_dataset_name,"train")
 
   xfm = builder(variables, key=transform_key)
 
@@ -472,6 +470,10 @@ def find_or_create_transforms(active_dataset_name, model_src_dataset_name, trans
   return input_transform, target_transform
 
 
+def load_raw_dataset_split(dataset_name, split):
+    data_dirpath = os.path.join(os.getenv('DERIVED_DATA'), 'moose', 'nc-datasets',dataset_name)
+    return xr.load_dataset(os.path.join(data_dirpath, f'{split}.nc'))
+
 def get_dataset(active_dataset_name, model_src_dataset_name, input_transform_key, target_transform_key, transform_dir, batch_size, split, evaluation=False):
   """Create data loaders for given split.
 
@@ -491,8 +493,7 @@ def get_dataset(active_dataset_name, model_src_dataset_name, input_transform_key
 
   transform, target_transform = find_or_create_transforms(active_dataset_name, model_src_dataset_name, transform_dir, input_transform_key, target_transform_key, evaluation)
 
-  data_dirpath = os.path.join(os.getenv('DERIVED_DATA'), 'moose', 'nc-datasets',active_dataset_name)
-  xr_data = xr.load_dataset(os.path.join(data_dirpath, f'{split}.nc'))
+  xr_data = load_raw_dataset_split(active_dataset_name, split)
 
   variables, target_variables = get_variables(model_src_dataset_name)
 
