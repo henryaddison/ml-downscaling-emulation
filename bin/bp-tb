@@ -9,4 +9,4 @@ host=${2:-bp}
 port=$(shuf -i 6000-9999 -n 1)
 echo "Using port ${port} on ${host}"
 
-ssh -t -L ${port}:localhost:${port} ${host} "~/miniconda3/envs/cuda-downscaling/bin/tensorboard --port=${port} --logdir=/user/work/vf20964/score-sde/workdirs/subvpsde/xarray_cncsnpp_continuous/${run_name}/tensorboard"
+ssh -t -L ${port}:localhost:${port} ${host} "~/miniconda3/envs/cuda-downscaling/bin/tensorboard --port=${port} --logdir=/user/work/vf20964/workdirs/${run_name}/tensorboard"
