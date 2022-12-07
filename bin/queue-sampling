@@ -40,7 +40,7 @@ def queue_cmd(depends_on, sampling_jobs, sampling_duration):
   return queue_basecmd + [arg for item in queue_opts.items() for arg in item]
 
 @app.command()
-def main(model_run_id: str, cpm_dataset: str, gcm_dataset: str, epoch: int = 100, depends_on: int = None):
+def main(model_run_id: str, cpm_dataset: str, gcm_dataset: str, epoch: int, depends_on: int = None):
 
   sampling_jobs=3
   samples_per_job=1
