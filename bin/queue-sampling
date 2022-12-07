@@ -1,31 +1,68 @@
-#!/usr/bin/bash
+#!/usr/bin/env python
 # setup jobs for sampling from a model
 
-set -euo pipefail
+import os
+import subprocess
+import sys
 
-sampling_jobs=3
-samples_per_job=1
-sampling_duration=$((18*samples_per_job))
+import typer
 
-model_run_id=$1
-epoch=200
-cpm_dataset=$2
-gcm_dataset=$3
-if [ ! -z "${4:-}" ]; then
-  dependency_opt="-d ${4}"
-else
-  dependency_opt=""
-fi
-batch_size=1024
+app = typer.Typer()
 
-workdir=${DERIVED_DATA}/workdirs/u-net/${model_run_id}
+def sample_cmd(dataset, epoch, samples_per_job, workdir):
+  batch_size=1024
 
-set -x
+  sample_basecmd = ["mlde", "evaluate", "sample"]
 
-# sample CPM
+  sample_opts = {
+    "--epoch": str(epoch),
+    "--num-samples": str(samples_per_job),
+    "--dataset": dataset,
+    "--batch-size": batch_size,
+  }
 
-lbatch ${dependency_opt} -g 1 -m 16 -q gpu,cnu -t ${sampling_duration} --condaenv cuda-downscaling --array 1-${sampling_jobs} -- mlde evaluate sample --epoch ${epoch} --num-samples 1 --dataset ${cpm_dataset} ${workdir} --batch-size ${batch_size}
+  return sample_basecmd + [arg for item in sample_opts.items() for arg in item] + [workdir]
 
-# sample GCM
+def queue_cmd(depends_on, sampling_jobs, sampling_duration):
+  queue_basecmd = ["lbatch"]
 
-lbatch ${dependency_opt} -g 1 -m 16 -q gpu,cnu -t ${sampling_duration} --condaenv cuda-downscaling --array 1-${sampling_jobs} -- mlde evaluate sample --epoch ${epoch} --num-samples 1 --dataset ${gcm_dataset} ${workdir} --batch-size ${batch_size}
+  queue_opts = {
+    "-g": "1",
+    "-m": "16",
+    "-q": "cnu,gpu",
+    "-t": str(sampling_duration),
+    "--condaenv": "cuda-downscaling",
+    "--array": f"1-{sampling_jobs}"
+  }
+  if depends_on is not None:
+    queue_opts["-d"] = str(depends_on)
+
+  return queue_basecmd + [arg for item in queue_opts.items() for arg in item]
+
+@app.command()
+def main(model_run_id: str, cpm_dataset: str, gcm_dataset: str, epoch: int = 100, depends_on: int = None):
+
+  sampling_jobs=3
+  samples_per_job=1
+  sampling_duration=18*samples_per_job
+
+  workdir=f"{os.getenv('DERIVED_DATA')}/workdirs/u-net/{model_run_id}"
+
+  shared_queue_cmd = queue_cmd(depends_on, sampling_jobs, sampling_duration)
+
+  # sample CPM
+  full_cmd = shared_queue_cmd + ["--"] + sample_cmd(cpm_dataset, epoch, samples_per_job, workdir)
+  print(" ".join(full_cmd).strip(), file=sys.stderr)
+  output = subprocess.run(full_cmd, capture_output=True)
+  print(output.stderr.decode("utf8").strip(), file=sys.stderr)
+  print(output.stdout.decode("utf8").strip())
+
+  # sample GCM
+  full_cmd = shared_queue_cmd + ["--"] + sample_cmd(gcm_dataset, epoch, samples_per_job, workdir)
+  print(" ".join(full_cmd).strip(), file=sys.stderr)
+  output = subprocess.run(full_cmd, capture_output=True)
+  print(output.stderr.decode("utf8").strip(), file=sys.stderr)
+  print(output.stdout.decode("utf8").strip())
+
+if __name__ == "__main__":
+    app()
