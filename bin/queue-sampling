@@ -18,7 +18,7 @@ def sample_cmd(dataset, epoch, samples_per_job, workdir):
     "--epoch": str(epoch),
     "--num-samples": str(samples_per_job),
     "--dataset": dataset,
-    "--batch-size": batch_size,
+    "--batch-size": str(batch_size),
   }
 
   return sample_basecmd + [arg for item in sample_opts.items() for arg in item] + [workdir]
