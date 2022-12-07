@@ -2,9 +2,11 @@ import logging
 
 import numpy as np
 import torch
+from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 import xarray as xr
 
-def generate_samples(model, cond_batch):
+def generate_np_samples(model, cond_batch):
     model.eval()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -18,7 +20,7 @@ def generate_samples(model, cond_batch):
     samples = samples.cpu().detach().numpy()
     return samples
 
-def samples_to_xr(samples, xr_eval_ds, target_transform):
+def np_samples_to_xr(samples, xr_eval_ds, target_transform):
     coords = {**dict(xr_eval_ds.coords)}
 
     cf_data_vars = {key: xr_eval_ds.data_vars[key] for key in ["rotated_latitude_longitude", "time_bnds", "grid_latitude_bnds", "grid_longitude_bnds"]}
@@ -38,18 +40,22 @@ def samples_to_xr(samples, xr_eval_ds, target_transform):
 
     return pred_ds
 
-def predict(model, eval_dl, target_transform):
-    preds = []
-    with torch.no_grad():
-        for batch_num, (cond_batch, _) in enumerate(eval_dl):
-            logging.info(f"Working on batch {batch_num}")
-            samples = generate_samples(model, cond_batch)
-            preds.append(samples)
+def sample(model, eval_dl, target_transform):
+    np_samples = []
+    with logging_redirect_tqdm():
+        with tqdm(total=len(eval_dl.dataset), desc=f'Sampling', unit=' timesteps') as pbar:
+            with torch.no_grad():
+                for batch_num, (cond_batch, _) in enumerate(eval_dl):
+                    logging.info(f"Working on batch {batch_num}")
+                    batch_np_samples = generate_np_samples(model, cond_batch)
+                    np_samples.append(batch_np_samples)
+
+                    pbar.update(batch_np_samples.shape[0])
 
     # combine the samples along the time/batch axis
-    preds = np.concatenate(preds, axis=0)
+    np_samples = np.concatenate(np_samples, axis=0)
     xr_data_eval  = eval_dl.dataset.ds
 
-    preds_ds = samples_to_xr(samples, xr_data_eval, target_transform)
+    xr_samples = np_samples_to_xr(np_samples, xr_data_eval, target_transform)
 
-    return preds_ds
+    return xr_samples
