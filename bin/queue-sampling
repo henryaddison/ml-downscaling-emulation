@@ -42,8 +42,8 @@ def queue_cmd(depends_on, sampling_jobs, sampling_duration):
 @app.command()
 def main(model_run_id: str, cpm_dataset: str, gcm_dataset: str, epoch: int, depends_on: int = None):
 
-  sampling_jobs=3
-  samples_per_job=1
+  sampling_jobs=1
+  samples_per_job=3
   sampling_duration=18*samples_per_job
 
   workdir=f"{os.getenv('DERIVED_DATA')}/workdirs/u-net/{model_run_id}"
