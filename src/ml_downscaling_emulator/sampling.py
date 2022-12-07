@@ -46,7 +46,6 @@ def sample(model, eval_dl, target_transform):
         with tqdm(total=len(eval_dl.dataset), desc=f'Sampling', unit=' timesteps') as pbar:
             with torch.no_grad():
                 for batch_num, (cond_batch, _) in enumerate(eval_dl):
-                    logging.info(f"Working on batch {batch_num}")
                     batch_np_samples = generate_np_samples(model, cond_batch)
                     np_samples.append(batch_np_samples)
 
