@@ -9,27 +9,34 @@ import typer
 
 app = typer.Typer()
 
+
 def train_cmd(dataset, workdir, config_overrides=list):
-  train_basecmd = ["python", "bin/train-model.py"]
+    train_basecmd = ["python", "bin/train-model.py"]
 
-  train_opts = {
-    "--dataset": dataset,
-  }
+    train_opts = {
+        "--dataset": dataset,
+    }
 
-  return train_basecmd + [workdir] + [arg for item in train_opts.items() for arg in item] + config_overrides
+    return (
+        train_basecmd
+        + [workdir]
+        + [arg for item in train_opts.items() for arg in item]
+        + config_overrides
+    )
+
 
 def queue_cmd(training_duration):
-  queue_basecmd = ["lbatch"]
+    queue_basecmd = ["lbatch"]
 
-  queue_opts = {
-    "-g": "1",
-    "-m": "16",
-    "-q": "cnu,gpu",
-    "-t": str(training_duration),
-    "--condaenv": "cuda-downscaling",
-  }
+    queue_opts = {
+        "-g": "1",
+        "-m": "16",
+        "-q": "cnu,gpu",
+        "-t": str(training_duration),
+        "--condaenv": "cuda-downscaling",
+    }
 
-  return queue_basecmd + [arg for item in queue_opts.items() for arg in item]
+    return queue_basecmd + [arg for item in queue_opts.items() for arg in item]
 
 
 @app.command(
@@ -42,15 +49,20 @@ def main(ctx: typer.Context, model_run_id: str, cpm_dataset: str):
     # Add any other config on the commandline for training
     # --config.data.input_transform_key=spatial
 
-    training_duration=36
+    training_duration = 36
 
-    workdir=f"{os.getenv('DERIVED_DATA')}/workdirs/u-net/{model_run_id}"
+    workdir = f"{os.getenv('DERIVED_DATA')}/workdirs/u-net/{model_run_id}"
 
-    full_cmd = queue_cmd(training_duration) + ["--"] + train_cmd(cpm_dataset, workdir, ctx.args)
+    full_cmd = (
+        queue_cmd(training_duration)
+        + ["--"]
+        + train_cmd(cpm_dataset, workdir, ctx.args)
+    )
     print(" ".join(full_cmd).strip(), file=sys.stderr)
     output = subprocess.run(full_cmd, capture_output=True)
     print(output.stderr.decode("utf8").strip(), file=sys.stderr)
     print(output.stdout.decode("utf8").strip())
+
 
 if __name__ == "__main__":
     app()
