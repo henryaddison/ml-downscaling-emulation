@@ -4,18 +4,21 @@ set -euo pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-dataset="bham_gcmx-4x_spechum-temp-vort_random"
+cpm_dataset="bham_gcmx-4x_spechum-temp-vort_random"
+gcm_dataset="bham_gcmx-4x_spechum-temp-vort_random"
 workdir="output/test/unet"
 
 map_features=1
 train_batch_size=2
 
 rm -rf output/test
-WANDB_EXPERIMENT_NAME="test" python ${SCRIPT_DIR}/train-model.py ${workdir} --dataset ${dataset} --batch-size ${train_batch_size} --learning-rate 1e-4 --epochs=2
+WANDB_EXPERIMENT_NAME="test" python ${SCRIPT_DIR}/train-model.py ${workdir} --dataset ${cpm_dataset} --batch-size ${train_batch_size} --learning-rate 1e-4 --epochs=2
 
 epoch=2
 num_samples=2
 eval_batchsize=128
 
-rm -rf "${workdir}/samples/epoch-${epoch}/${dataset}"
-mlde evaluate sample ${workdir} --dataset ${dataset} --epoch ${epoch} --batch-size ${eval_batchsize} --num-samples ${num_samples}
+rm -rf "${workdir}/samples/epoch-${epoch}/${cpm_dataset}"
+mlde evaluate sample ${workdir} --dataset ${cpm_dataset} --epoch ${epoch} --batch-size ${eval_batchsize} --num-samples ${num_samples}
+rm -rf "${workdir}/samples/epoch-${epoch}/${gcm_dataset}"
+mlde evaluate sample ${workdir} --dataset ${cpm_dataset} --epoch ${epoch} --batch-size ${eval_batchsize} --num-samples ${gcm_dataset}
