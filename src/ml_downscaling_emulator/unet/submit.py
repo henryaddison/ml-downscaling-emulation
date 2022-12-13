@@ -25,22 +25,22 @@ def rle_encode(mask_image):
 
 def submit(net):
     """Used for Kaggle submission: predicts and encode all test images"""
-    dir = 'data/test/'
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    dir = "data/test/"
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     N = len(list(os.listdir(dir)))
-    with open('SUBMISSION.csv', 'a') as f:
-        f.write('img,rle_mask\n')
+    with open("SUBMISSION.csv", "a") as f:
+        f.write("img,rle_mask\n")
         for index, i in enumerate(os.listdir(dir)):
-            print('{}/{}'.format(index, N))
+            print("{}/{}".format(index, N))
 
             img = Image.open(dir + i)
 
             mask = predict_img(net, img, device)
             enc = rle_encode(mask)
-            f.write('{},{}\n'.format(i, ' '.join(map(str, enc))))
+            f.write("{},{}\n".format(i, " ".join(map(str, enc))))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     net = UNet(3, 1).cuda()
-    net.load_state_dict(torch.load('MODEL.pth'))
+    net.load_state_dict(torch.load("MODEL.pth"))
     submit(net)
