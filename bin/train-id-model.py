@@ -4,16 +4,7 @@ from pathlib import Path
 
 from codetiming import Timer
 from knockknock import slack_sender
-import numpy as np
-import torch
-from tqdm import tqdm
-from tqdm.contrib.logging import logging_redirect_tqdm
 import typer
-import yaml
-
-from ml_downscaling_emulator.unet import unet
-from ml_downscaling_emulator.training import log_epoch, track_run, save_checkpoint
-from ml_downscaling_emulator.training.dataset import get_dataset
 
 UNET_ARCHNAME = "u-net"
 SIMPLE_CONV_ARCHNAME = "simple-conv"
