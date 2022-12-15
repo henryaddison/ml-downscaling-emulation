@@ -5,16 +5,24 @@ set -euo pipefail
 
 model_type="score-sde"
 
-src_root="/user/work/vf20964/workdirs/${model_type}"
-destination="xfer1.jasmin:/gws/nopw/j04/bris_climdyn/henrya/bp-backups/moose/workdirs/${model_type}"
+function backupmodels {
+  local model_type=${1}
+  local depth=${2}
 
-cd ${src_root}
-srcs=$(find . -maxdepth 3 -mindepth 3 -type d)
-for src in ${srcs[@]}; do
-  if [[ "${src}" = *"archive"* ]]; then
-    continue;
-  fi;
-  set -x
-  rsync -avz ${src} ${destination}
-  set +x
-done
+  local src_root="/user/work/vf20964/workdirs/${model_type}"
+  local destination="xfer1.jasmin:/gws/nopw/j04/bris_climdyn/henrya/bp-backups/moose/workdirs/${model_type}"
+
+  cd ${src_root}
+  local srcs=$(find . -maxdepth ${depth} -mindepth ${depth} -type d)
+  for src in ${srcs[@]}; do
+    if [[ "${src}" = *"archive"* ]]; then
+      continue;
+    fi;
+    set -x
+    rsync -avz ${src} ${destination}
+    set +x
+  done
+}
+
+backupmodels("score-sde", 3)
+backupmodels("u-net", 1)
