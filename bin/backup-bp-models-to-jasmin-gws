@@ -1,0 +1,21 @@
+#!/bin/bash
+# Sync models (including samples) for backup from BluePebble to GWS on JASMIN
+
+set -euo pipefail
+
+model_type="score_sde"
+
+src_root="/user/work/vf20964/workdirs/${model_type}"
+destination="xfer1.jasmin:/gws/nopw/j04/bris_climdyn/henrya/bp-backups/moose/workdirs/${model_type}"
+
+cd ${src_root}
+srcs=$(find . -maxdepth 3 -mindepth 3 -type d)
+for src in ${srcs[@]}; do
+  if [[ "${src}" = *"archive"* ]]; then
+    continue;
+  fi;
+  echo $src
+  #   set -x
+  #   rsync -avz ${src} ${destination}
+  #   set +x
+done
