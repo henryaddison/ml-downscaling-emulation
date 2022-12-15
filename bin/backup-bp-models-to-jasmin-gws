@@ -21,8 +21,8 @@ function backupmodels {
     set -x
     rsync -avz ${src} ${destination}
     set +x
-  done
+  done;
 }
 
-backupmodels("score-sde", 3)
-backupmodels("u-net", 1)
+backupmodels "score-sde" 3
+backupmodels "u-net" 1
