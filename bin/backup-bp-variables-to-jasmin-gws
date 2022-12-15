@@ -1,5 +1,5 @@
 #!/bin/bash
-# Sync data for backup from BluePebble to GWS on JASMIN
+# Sync variables for backup from BluePebble to GWS on JASMIN
 
 set -euo pipefail
 
