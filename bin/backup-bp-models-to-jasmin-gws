@@ -14,8 +14,7 @@ for src in ${srcs[@]}; do
   if [[ "${src}" = *"archive"* ]]; then
     continue;
   fi;
-  echo $src
-  #   set -x
-  #   rsync -avz ${src} ${destination}
-  #   set +x
+  set -x
+  rsync -avz ${src} ${destination}
+  set +x
 done
