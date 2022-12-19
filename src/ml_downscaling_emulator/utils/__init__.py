@@ -178,7 +178,7 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
         ax.set_title("Log density of sample and target precip")
         ax.set_xlabel("Precip (mm day-1)")
         ax.tick_params(axis="both", which="major")
-        if diagnostics == True:
+        if diagnostics:
             text = f"""
             # Timestamps: {pred_pr["time"].count().values}
             # Samples: {pred_pr.count().values}
@@ -283,8 +283,6 @@ def plot_single_mean_bias(ds):
     vmin = min([da.min().values for da in [sample_mean, target_mean]])
     vmax = max([da.max().values for da in [sample_mean, target_mean]])
 
-    bias_vmax = abs(bias).max().values
-
     bias_ratio_vmax = abs(bias_ratio).max().values
 
     for source in sample_mean["source"].values:
@@ -323,9 +321,9 @@ def plot_single_mean_bias(ds):
 
 def plot_std(ds):
     IPython.display.display_html(
-        f"<h1>$\sigma_{{sample}}$/$\sigma_{{CPM}}$</h1>", raw=True
+        f"<h1>$\\sigma_{{sample}}$/$\\sigma_{{CPM}}$</h1>", raw=True
     )
-    IPython.display.display_html(f"<h2>All</h2>", raw=True)
+    IPython.display.display_html("<h2>All</h2>", raw=True)
     plot_single_std_bias(ds)
 
     for season, seasonal_ds in ds.groupby("time.season"):
@@ -347,16 +345,16 @@ def plot_single_std_bias(ds):
         IPython.display.display_html(f"<h3>{source}</h3>", raw=True)
 
         fig, axd = plt.subplot_mosaic(
-            [np.concatenate([["$\sigma_{CPM}$"], std_ratio["model"].values])],
+            [np.concatenate([["$\\sigma_{CPM}$"], std_ratio["model"].values])],
             figsize=((len(std_ratio["model"].values) + 1) * 5.5, 5.5),
             subplot_kw=dict(projection=cp_model_rotated_pole),
             constrained_layout=True,
         )
-        ax = axd["$\sigma_{CPM}$"]
+        ax = axd["$\\sigma_{CPM}$"]
         plot_grid(
             target_std,
             ax,
-            title="$\sigma_{CPM}$",
+            title="$\\sigma_{CPM}$",
             norm=None,
             vmin=vmin,
             vmax=vmax,
@@ -378,7 +376,7 @@ def plot_single_std_bias(ds):
 
 
 def psd(batch):
-    npix = batch.shape[1]
+    # npix = batch.shape[1]
     fourier = np.fft.fftshift(np.fft.fftn(batch, axes=(1, 2)), axes=(1, 2))
     amps = np.abs(fourier) ** 2  # / npix**2
     return amps

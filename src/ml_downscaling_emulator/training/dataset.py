@@ -122,23 +122,6 @@ class PixelMatchModelSrcStandardize:
             ds[variable] = da_global_stan_like_model_src
         return ds
 
-    def transform(self, ds):
-        for variable in self.variables:
-            # first standardize each pixel
-            da_pixel_stan = (
-                ds[variable] - self.pixel_target_means[variable]
-            ) / self.pixel_target_stds[variable]
-            # then match mean and variance of each pixel to model source distribution
-            da_pixel_like_model_src = (
-                da_pixel_stan * self.pixel_model_src_stds[variable]
-            ) + self.pixel_model_src_means[variable]
-            # finally standardize globally (assuming a model source distribution)
-            da_global_stan_like_model_src = (
-                da_pixel_like_model_src - self.global_model_src_means[variable]
-            ) / self.global_model_src_stds[variable]
-            ds[variable] = da_global_stan_like_model_src
-        return ds
-
 
 class MinMax:
     def __init__(self, variables):
