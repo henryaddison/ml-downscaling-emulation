@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 cpm_dataset="bham_gcmx-4x_spechum-temp-vort_random"
-gcm_dataset="bham_gcmx-4x_spechum-temp-vort_random"
+gcm_dataset="bham_60km-4x_spechum-temp-vort_random"
 workdir="output/test/unet"
 
 map_features=1
@@ -21,4 +21,4 @@ eval_batchsize=128
 rm -rf "${workdir}/samples/epoch-${epoch}/${cpm_dataset}"
 mlde evaluate sample ${workdir} --dataset ${cpm_dataset} --epoch ${epoch} --batch-size ${eval_batchsize} --num-samples ${num_samples}
 rm -rf "${workdir}/samples/epoch-${epoch}/${gcm_dataset}"
-mlde evaluate sample ${workdir} --dataset ${cpm_dataset} --epoch ${epoch} --batch-size ${eval_batchsize} --num-samples ${gcm_dataset}
+mlde evaluate sample ${workdir} --dataset ${gcm_dataset} --epoch ${epoch} --batch-size ${eval_batchsize} --num-samples ${num_samples}
