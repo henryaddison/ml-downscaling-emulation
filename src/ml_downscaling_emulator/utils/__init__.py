@@ -136,8 +136,7 @@ def show_samples(ds, timestamps):
         plt.show()
 
 
-def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
-    target_pr = ds.sel(source="CPM")["target_pr"]
+def distribution_figure(ds, target_pr, quantiles, figtitle, diagnostics=False):
     for source in ds["source"].values:
         pred_pr = ds.sel(source=source)["pred_pr"]
         IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
@@ -209,6 +208,10 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
         qq_plot(ax, target_pr, pred_prs, quantiles)
         plt.show()
 
+
+def seasonal_qq_plots(ds, target_pr, quantiles):
+    for source in ds["source"].values:
+        IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
         fig, axes = plt.subplot_mosaic(
             [["Quantiles DJF", "Quantiles MAM", "Quantiles JJA", "Quantiles SON"]],
             figsize=(22, 5.5),
@@ -216,7 +219,10 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
         )
         for season, seasonal_ds in ds.groupby("time.season"):
             ax = axes[f"Quantiles {season}"]
-            target_pr = seasonal_ds.sel(source="CPM")["target_pr"]
+            # seasonal_target_pr = seasonal_ds.sel(source="CPM")["target_pr"]
+            seasonal_target_pr = target_pr.sel(
+                time=(target_pr["time.season"] == season)
+            )
             # pred_pr = seasonal_ds.sel(source=source)["pred_pr"]
             pred_prs = [
                 (model, seasonal_ds["pred_pr"].sel(source=source, model=model))
@@ -227,13 +233,19 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
 
             qq_plot(
                 ax,
-                target_pr,
+                seasonal_target_pr,
                 pred_prs,
                 quantiles,
                 title=f"Sample vs Target {season} quantiles",
             )
         plt.show()
 
+
+def scatter_plots(ds, target_pr):
+    # target_pr = ds.sel(source="CPM")["target_pr"]
+    for source in ds["source"].values:
+        IPython.display.display_html(f"<h5>{source}</h5>", raw=True)
+        pred_pr = ds.sel(source=source)["pred_pr"]
         fig, axd = plt.subplot_mosaic(
             [pred_pr["model"].values], figsize=(22, 5.5), constrained_layout=True
         )
@@ -265,16 +277,6 @@ def distribution_figure(ds, quantiles, figtitle, diagnostics=False):
 
 
 def plot_mean_bias(ds):
-    IPython.display.display_html(f"<h1>Bias/Target mean</h1>", raw=True)
-    IPython.display.display_html(f"<h2>All</h2>", raw=True)
-    plot_single_mean_bias(ds)
-
-    for season, seasonal_ds in ds.groupby("time.season"):
-        IPython.display.display_html(f"<h2>Season {season}</h2>", raw=True)
-        plot_single_mean_bias(seasonal_ds)
-
-
-def plot_single_mean_bias(ds):
     target_mean = ds["target_pr"].sel(source="CPM").mean(dim="time")
     sample_mean = ds["pred_pr"].mean(dim=["sample_id", "time"])
     bias = sample_mean - target_mean
@@ -286,7 +288,7 @@ def plot_single_mean_bias(ds):
     bias_ratio_vmax = abs(bias_ratio).max().values
 
     for source in sample_mean["source"].values:
-        IPython.display.display_html(f"<h3>{source}</h3>", raw=True)
+        IPython.display.display_html(f"<h4>{source}</h4>", raw=True)
 
         fig, axd = plt.subplot_mosaic(
             [np.concatenate([["Target mean"], bias_ratio["model"].values])],
@@ -319,19 +321,7 @@ def plot_single_mean_bias(ds):
         plt.show()
 
 
-def plot_std(ds):
-    IPython.display.display_html(
-        f"<h1>$\\sigma_{{sample}}$/$\\sigma_{{CPM}}$</h1>", raw=True
-    )
-    IPython.display.display_html("<h2>All</h2>", raw=True)
-    plot_single_std_bias(ds)
-
-    for season, seasonal_ds in ds.groupby("time.season"):
-        IPython.display.display_html(f"<h2>Season {season}</h2>", raw=True)
-        plot_single_std_bias(seasonal_ds)
-
-
-def plot_single_std_bias(ds):
+def plot_std_bias(ds):
     target_std = ds["target_pr"].sel(source="CPM").std(dim="time")
     sample_std = ds["pred_pr"].std(dim=["sample_id", "time"])
     std_ratio = sample_std / target_std
@@ -342,7 +332,7 @@ def plot_single_std_bias(ds):
     std_ratio_vmax = 1 + (abs(1 - std_ratio).max().values)
 
     for source in sample_std["source"].values:
-        IPython.display.display_html(f"<h3>{source}</h3>", raw=True)
+        IPython.display.display_html(f"<h4>{source}</h4>", raw=True)
 
         fig, axd = plt.subplot_mosaic(
             [np.concatenate([["$\\sigma_{CPM}$"], std_ratio["model"].values])],
