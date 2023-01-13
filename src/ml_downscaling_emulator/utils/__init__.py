@@ -197,7 +197,7 @@ def distribution_figure(ds, target_pr, quantiles, figtitle, diagnostics=False):
         ax.legend()
         # ax.set_aspect(aspect=1)
 
-        target_pr = ds.sel(source="CPM")["target_pr"]
+        # target_pr = ds.sel(source="CPM")["target_pr"]
         pred_prs = [
             (model, ds["pred_pr"].sel(source=source, model=model))
             for model in ds["model"].values
