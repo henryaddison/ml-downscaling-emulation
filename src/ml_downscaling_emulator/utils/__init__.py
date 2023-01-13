@@ -276,8 +276,8 @@ def scatter_plots(ds, target_pr):
     # fig.suptitle(figtitle, fontsize=32)
 
 
-def plot_mean_bias(ds):
-    target_mean = ds["target_pr"].sel(source="CPM").mean(dim="time")
+def plot_mean_bias(ds, target_pr):
+    target_mean = target_pr.mean(dim="time")
     sample_mean = ds["pred_pr"].mean(dim=["sample_id", "time"])
     bias = sample_mean - target_mean
     bias_ratio = bias / target_mean
@@ -321,8 +321,8 @@ def plot_mean_bias(ds):
         plt.show()
 
 
-def plot_std_bias(ds):
-    target_std = ds["target_pr"].sel(source="CPM").std(dim="time")
+def plot_std_bias(ds, target_pr):
+    target_std = target_pr.std(dim="time")
     sample_std = ds["pred_pr"].std(dim=["sample_id", "time"])
     std_ratio = sample_std / target_std
 
