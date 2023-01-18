@@ -11,6 +11,7 @@ import xarray as xr
 
 from ..plotting import (
     cp_model_rotated_pole,
+    freq_density_plot,
     precip_clevs,
     precip_norm,
     precip_cmap,
@@ -137,108 +138,36 @@ def show_samples(ds, timestamps):
 
 
 def distribution_figure(ds, target_pr, quantiles, figtitle, diagnostics=False):
-    for source in ds["source"].values:
-        pred_pr = ds.sel(source=source)["pred_pr"]
-        IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
+    fig, axes = plt.subplot_mosaic(
+        [["Density", "Quantiles"]], figsize=(16.5, 5.5), constrained_layout=True
+    )
 
-        fig, axes = plt.subplot_mosaic(
-            [["Density", "Quantiles"]], figsize=(16.5, 5.5), constrained_layout=True
+    ax = axes["Density"]
+    freq_density_plot(ax, ds, target_pr, diagnostics=diagnostics)
+
+    ax = axes["Quantiles"]
+    qq_plot(ax, target_pr, ds, quantiles)
+    plt.show()
+
+
+def seasonal_distribution_figure(ds, target_pr, quantiles):
+    fig, axes = plt.subplot_mosaic(
+        [["Quantiles DJF", "Quantiles MAM", "Quantiles JJA", "Quantiles SON"]],
+        figsize=(22, 5.5),
+        constrained_layout=True,
+    )
+    for season, seasonal_ds in ds.groupby("time.season"):
+        ax = axes[f"Quantiles {season}"]
+        seasonal_target_pr = target_pr.sel(time=(target_pr["time.season"] == season))
+
+        qq_plot(
+            ax,
+            seasonal_target_pr,
+            seasonal_ds,
+            quantiles,
+            title=f"Sample vs Target {season} quantiles",
         )
-
-        ax = axes["Density"]
-        hrange = (
-            min(pred_pr.min().values, target_pr.min().values),
-            max(pred_pr.max().values, target_pr.max().values),
-        )
-        _, bins, _ = target_pr.plot.hist(
-            ax=ax,
-            bins=50,
-            density=True,
-            color="black",
-            alpha=0.2,
-            label="Target",
-            log=True,
-            range=hrange,
-        )
-        for model in pred_pr["model"].values:
-            pred_pr.sel(model=model).plot.hist(
-                ax=ax,
-                bins=bins,
-                density=True,
-                alpha=0.75,
-                histtype="step",
-                label=f"{model}",
-                log=True,
-                range=hrange,
-                linewidth=2,
-                linestyle="-",
-            )
-
-        ax.set_title("Log density of sample and target precip")
-        ax.set_xlabel("Precip (mm day-1)")
-        ax.tick_params(axis="both", which="major")
-        if diagnostics:
-            text = f"""
-            # Timestamps: {pred_pr["time"].count().values}
-            # Samples: {pred_pr.count().values}
-            # Targets: {target_pr.count().values}
-            % Samples == 0: {(((pred_pr == 0).sum()/pred_pr.count()).values*100).round()}
-            % Targets == 0: {(((target_pr == 0).sum()/target_pr.count()).values*100).round()}
-            % Samples < 1e-5: {(((pred_pr < 1e-5).sum()/pred_pr.count()).values*100).round()}
-            % Targets < 1e-5: {(((target_pr < 1e-5).sum()/target_pr.count()).values*100).round()}
-            % Samples < 0.1: {(((pred_pr < 0.1).sum()/pred_pr.count()).values*100).round()}
-            % Targets < 0.1: {(((target_pr < 0.1).sum()/target_pr.count()).values*100).round()}
-            % Samples < 1: {(((pred_pr < 1).sum()/pred_pr.count()).values*100).round()}
-            % Targets < 1: {(((target_pr < 1).sum()/target_pr.count()).values*100).round()}
-            Sample max: {pred_pr.max().values.round()}
-            Target max: {target_pr.max().values.round()}
-            """
-            ax.text(0.7, 0.5, text, fontsize=8, transform=ax.transAxes)
-        ax.legend()
-        # ax.set_aspect(aspect=1)
-
-        # target_pr = ds.sel(source="CPM")["target_pr"]
-        pred_prs = [
-            (model, ds["pred_pr"].sel(source=source, model=model))
-            for model in ds["model"].values
-        ]
-        # assert target_pr.isnull().sum().values == 0
-        # assert pred_pr.isnull().sum().values == 0
-        ax = axes["Quantiles"]
-        qq_plot(ax, target_pr, pred_prs, quantiles)
-        plt.show()
-
-
-def seasonal_qq_plots(ds, target_pr, quantiles):
-    for source in ds["source"].values:
-        IPython.display.display_html(f"<h1>{source}</h1>", raw=True)
-        fig, axes = plt.subplot_mosaic(
-            [["Quantiles DJF", "Quantiles MAM", "Quantiles JJA", "Quantiles SON"]],
-            figsize=(22, 5.5),
-            constrained_layout=True,
-        )
-        for season, seasonal_ds in ds.groupby("time.season"):
-            ax = axes[f"Quantiles {season}"]
-            # seasonal_target_pr = seasonal_ds.sel(source="CPM")["target_pr"]
-            seasonal_target_pr = target_pr.sel(
-                time=(target_pr["time.season"] == season)
-            )
-            # pred_pr = seasonal_ds.sel(source=source)["pred_pr"]
-            pred_prs = [
-                (model, seasonal_ds["pred_pr"].sel(source=source, model=model))
-                for model in seasonal_ds["model"].values
-            ]
-            # assert target_pr.isnull().sum().values == 0
-            # assert pred_pr.isnull().sum().values == 0
-
-            qq_plot(
-                ax,
-                seasonal_target_pr,
-                pred_prs,
-                quantiles,
-                title=f"Sample vs Target {season} quantiles",
-            )
-        plt.show()
+    plt.show()
 
 
 def scatter_plots(ds, target_pr):
