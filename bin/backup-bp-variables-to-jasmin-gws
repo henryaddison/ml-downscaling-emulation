@@ -19,3 +19,9 @@ for src in ${srcs[@]}; do
   rsync -avz ${src} ${destination}
   set +x
 done
+
+# backup datasets too
+src="/user/work/vf20964/moose/nc-datasets"
+dest="xfer1.jasmin:/gws/nopw/j04/bris_climdyn/henrya/bp-backups/moose"
+
+rsync -avz --include='/*/' --exclude='archive/' ${src} ${dest}
