@@ -55,7 +55,11 @@ def merge_over_runs(runs, dataset_name, split):
     )
     eval_ds = xr.open_dataset(
         os.path.join(
-            os.getenv("MOOSE_DERIVED_DATA"), "nc-datasets", dataset_name, f"{split}.nc"
+            os.getenv("DERIVED_DATA"),
+            "moose",
+            "nc-datasets",
+            dataset_name,
+            f"{split}.nc",
         )
     )
 
