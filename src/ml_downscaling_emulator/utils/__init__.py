@@ -223,12 +223,28 @@ def plot_mean_bias(ds, target_pr):
     for source in sample_mean["source"].values:
         IPython.display.display_html(f"<h4>{source}</h4>", raw=True)
 
+        nmodels = len(bias_ratio["model"].values)
+        ncols = 6
+        nrows = nmodels // ncols
+        if nmodels % ncols != 0:
+            nrows = nrows + 1
+        if nrows == 1:
+            ncols = nmodels
+        bias_gridspec = np.pad(
+            bias_ratio["model"].values,
+            (0, ncols * nrows - nmodels),
+            mode="constant",
+            constant_values=".",
+        ).reshape(-1, ncols)
+        grid_spec = [np.concatenate([["Target mean"], row]) for row in bias_gridspec]
+
         fig, axd = plt.subplot_mosaic(
-            [np.concatenate([["Target mean"], bias_ratio["model"].values])],
-            figsize=((len(bias_ratio["model"].values) + 1) * 5.5, 5.5),
+            grid_spec,
+            figsize=(ncols * 5.5, 5.5 * nrows),
             subplot_kw=dict(projection=cp_model_rotated_pole),
             constrained_layout=True,
         )
+
         ax = axd["Target mean"]
         plot_grid(
             target_mean,
@@ -241,7 +257,7 @@ def plot_mean_bias(ds, target_pr):
         )
         for model in bias_ratio["model"].values:
             ax = axd[model]
-            plot_grid(
+            pcm = plot_grid(
                 bias_ratio.sel(source=source, model=model),
                 ax,
                 title=f"{model}",
@@ -249,8 +265,21 @@ def plot_mean_bias(ds, target_pr):
                 cmap="BrBG",
                 vmax=bias_ratio_vmax,
                 center=0,
-                add_colorbar=True,
+                add_colorbar=False,
             )
+
+        axes = [axd[key] for key in axd.keys() if key not in [".", "Target mean"]]
+        fig.colorbar(pcm, ax=axes, location="right")
+
+        # ax = fig.add_axes([1.05, 0.0, 0.025, 0.95])
+        # cb = fig.colorbar(pcm, cax=ax)
+        # cb = matplotlib.colorbar.Colorbar(ax), cmap=precip_cmap, norm=precip_norm)
+
+        # cb.ax.set_yticks(precip_clevs)
+        # cb.ax.set_yticklabels(precip_clevs)
+        # cb.ax.tick_params(axis="both", which="major")
+        # cb.ax.set_ylabel("Precip (mm day-1)")
+
         plt.show()
 
 
