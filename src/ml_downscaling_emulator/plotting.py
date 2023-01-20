@@ -108,6 +108,7 @@ def qq_plot(
     title="Sample vs Target quantiles",
     xlabel="Target precip (mm day-1)",
     ylabel="Sample precip (mm day-1)",
+    **scatter_args,
 ):
     labels = ds["model"].values
     pred_prs = [ds["pred_pr"].sel(model=model) for model in labels]
@@ -128,10 +129,15 @@ def qq_plot(
         color="black",
         linestyle="--",
         label="Ideal",
+        alpha=0.5,
     )
     for (label, y) in zip(labels, pred_prs):
         y_quantiles = y.quantile(quantiles)
-        ax.plot(x_quantiles, y_quantiles, label=label, alpha=0.5)
+        ax.scatter(
+            x_quantiles,
+            y_quantiles,
+            **(dict(label=label, alpha=0.75, marker="x") | scatter_args),
+        )
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
