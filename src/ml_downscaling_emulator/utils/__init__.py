@@ -335,7 +335,7 @@ def psd(batch):
 
 
 def plot_psd(arg):
-    plt.figure(figsize=(5.5, 5.5))
+    # fig = plt.figure(figsize=(5.5, 5.5))
     for label, precip_da in arg.items():
         npix = precip_da["grid_latitude"].size
         fourier_amplitudes = psd(precip_da.values.reshape(-1, npix, npix))
@@ -356,7 +356,10 @@ def plot_psd(arg):
 
         plt.loglog(kvals, mean_Abins, label=label)
 
-    plt.legend()
+    # plt.legend()
+    plt.legend(ncols=3)
+    plt.tight_layout()
+    plt.subplots_adjust(right=2, bottom=-0.25)
     plt.xlabel("$k$")
     plt.ylabel("$P(k)$")
     # plt.tight_layout()
