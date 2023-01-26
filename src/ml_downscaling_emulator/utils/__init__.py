@@ -47,7 +47,7 @@ def open_samples_ds(
     return ds
 
 
-def merge_over_runs(runs, dataset_name, split, num_samples):
+def merge_over_runs(runs, dataset_name, split, samples_per_run):
     samples_ds = xr.merge(
         [
             open_samples_ds(
@@ -56,8 +56,8 @@ def merge_over_runs(runs, dataset_name, split, num_samples):
                 checkpoint_id,
                 dataset_name,
                 split,
-                num_samples=num_samples,
-            ).isel(sample_id=range(num_samples))
+                num_samples=samples_per_run,
+            ).isel(sample_id=range(samples_per_run))
             for run_name, checkpoint_id, human_name in runs
         ]
     )
@@ -74,20 +74,20 @@ def merge_over_runs(runs, dataset_name, split, num_samples):
     return xr.merge([samples_ds, eval_ds], join="inner")
 
 
-def merge_over_sources(datasets, runs, split, num_samples=3):
+def merge_over_sources(datasets, runs, split, samples_per_run):
     xr_datasets = []
     sources = []
     for source, dataset_name in datasets.items():
         xr_datasets.append(
-            merge_over_runs(runs, dataset_name, split, num_samples=num_samples)
+            merge_over_runs(runs, dataset_name, split, samples_per_run=samples_per_run)
         )
         sources.append(source)
 
     return xr.concat(xr_datasets, pd.Index(sources, name="source"))
 
 
-def prep_eval_data(datasets, runs, split, num_samples=3):
-    ds = merge_over_sources(datasets, runs, split, num_samples=num_samples)
+def prep_eval_data(datasets, runs, split, samples_per_run=3):
+    ds = merge_over_sources(datasets, runs, split, samples_per_run=samples_per_run)
 
     # convert from kg m-2 s-1 (i.e. mm s-1) to mm day-1
     ds["pred_pr"] = (ds["pred_pr"] * 3600 * 24).assign_attrs({"units": "mm day-1"})
