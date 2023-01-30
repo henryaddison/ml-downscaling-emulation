@@ -37,9 +37,11 @@ def open_samples_ds(
         for sample_filepath in glob.glob(samples_filepath_pattern)[:num_samples]
     ]
     if len(sample_ds_list) == 0:
-        raise RuntimeError(f"{run_name} has no sample files")
+        raise RuntimeError(f"{samples_filepath_pattern} has no sample files")
     if len(sample_ds_list) < num_samples:
-        raise RuntimeError(f"{run_name} does not have {num_samples} sample files")
+        raise RuntimeError(
+            f"{samples_filepath_pattern} does not have {num_samples} sample files"
+        )
     # concatenate the samples along a new dimension
     ds = xr.concat(sample_ds_list, dim="sample_id")
     # add a model dimension so can compare data from different ml models
