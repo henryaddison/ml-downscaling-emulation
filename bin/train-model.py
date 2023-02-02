@@ -12,8 +12,8 @@ import typer
 import yaml
 
 from ml_downscaling_emulator.unet import unet
-from ml_downscaling_emulator.training import log_epoch, track_run, save_checkpoint
-from ml_downscaling_emulator.training.dataset import get_dataset
+from mlde_utils.training import log_epoch, track_run, save_checkpoint
+from mlde_utils.training.dataset import get_dataset
 
 UNET_ARCHNAME = "u-net"
 SIMPLE_CONV_ARCHNAME = "simple-conv"
