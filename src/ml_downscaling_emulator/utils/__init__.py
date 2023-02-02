@@ -1,7 +1,6 @@
 import glob
 import os
 
-import IPython
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -188,35 +187,34 @@ def seasonal_distribution_figure(ds, target_pr, quantiles):
 
 def scatter_plots(ds, target_pr):
     # target_pr = ds.sel(source="CPM")["target_pr"]
-    for source in ds["source"].values:
-        IPython.display.display_html(f"<h5>{source}</h5>", raw=True)
-        pred_pr = ds.sel(source=source)["pred_pr"]
-        fig, axd = plt.subplot_mosaic(
-            [pred_pr["model"].values], figsize=(22, 5.5), constrained_layout=True
+
+    pred_pr = ds["pred_pr"]
+    fig, axd = plt.subplot_mosaic(
+        [pred_pr["model"].values], figsize=(22, 5.5), constrained_layout=True
+    )
+    for model in pred_pr["model"].values:
+        tr = max(ds["pred_pr"].max(), ds["target_pr"].max())
+
+        ax = axd[model]
+
+        ax.scatter(
+            x=ds.sel(model=model)["pred_pr"],
+            y=ds.sel(model=model)["target_pr"]
+            .values[None, :]
+            .repeat(len(ds.sel(model=model)["sample_id"]), 0),
+            alpha=0.05,
         )
-        for model in pred_pr["model"].values:
-            tr = max(ds["pred_pr"].max(), ds["target_pr"].max())
-
-            ax = axd[model]
-
-            ax.scatter(
-                x=ds.sel(source=source, model=model)["pred_pr"],
-                y=ds.sel(source=source, model=model)["target_pr"]
-                .values[None, :]
-                .repeat(len(ds.sel(source=source, model=model)["sample_id"]), 0),
-                alpha=0.05,
-            )
-            ax.plot(
-                [0, tr],
-                [0, tr],
-                linewidth=1,
-                color="black",
-                linestyle="--",
-                label="Ideal",
-            )
-            ax.set_title(f"{model}")
-            ax.set_aspect(aspect=1)
-        plt.show()
+        ax.plot(
+            [0, tr],
+            [0, tr],
+            linewidth=1,
+            color="black",
+            linestyle="--",
+            label="Ideal",
+        )
+        ax.set_title(f"{model}")
+        ax.set_aspect(aspect=1)
+    plt.show()
 
     # fig.suptitle(figtitle, fontsize=32)
 
@@ -245,50 +243,41 @@ def plot_mean_bias(ds, target_pr):
     bias = sample_mean - target_mean
     bias_ratio = bias / target_mean
 
-    vmin = min([da.min().values for da in [sample_mean, target_mean]])
-    vmax = max([da.max().values for da in [sample_mean, target_mean]])
+    target_name = "$\\mu_{CPM}$"
+    grid_spec = compute_gridspec(bias_ratio["model"].values, target_name)
+    fig, axd = plt.subplot_mosaic(
+        grid_spec,
+        figsize=(grid_spec.shape[1] * 5.5, grid_spec.shape[0] * 5.5),
+        subplot_kw=dict(projection=cp_model_rotated_pole),
+        constrained_layout=True,
+    )
 
-    bias_ratio_vmax = abs(bias_ratio).max().values
-
-    for source in sample_mean["source"].values:
-        IPython.display.display_html(f"<h4>{source}</h4>", raw=True)
-
-        target_name = "$\\mu_{CPM}$"
-        grid_spec = compute_gridspec(bias_ratio["model"].values, target_name)
-        fig, axd = plt.subplot_mosaic(
-            grid_spec,
-            figsize=(grid_spec.shape[1] * 5.5, grid_spec.shape[0] * 5.5),
-            subplot_kw=dict(projection=cp_model_rotated_pole),
-            constrained_layout=True,
-        )
-
-        ax = axd[target_name]
-        plot_grid(
-            target_mean,
+    ax = axd[target_name]
+    pcm = plot_grid(
+        target_mean,
+        ax,
+        title=target_name,
+        norm=None,
+        add_colorbar=False,
+    )
+    fig.colorbar(pcm, ax=[ax], location="right", shrink=0.8, extend="both")
+    for model in bias_ratio["model"].values:
+        ax = axd[model]
+        pcm = plot_grid(
+            bias_ratio.sel(model=model),
             ax,
-            title=target_name,
+            title=f"{model} normalized mean bias",
             norm=None,
-            vmin=vmin,
-            vmax=vmax,
-            add_colorbar=True,
+            cmap="BrBG",
+            vmax=0.2,
+            center=0,
+            add_colorbar=False,
         )
-        for model in bias_ratio["model"].values:
-            ax = axd[model]
-            pcm = plot_grid(
-                bias_ratio.sel(source=source, model=model),
-                ax,
-                title=f"{model}",
-                norm=None,
-                cmap="BrBG",
-                vmax=bias_ratio_vmax,
-                center=0,
-                add_colorbar=False,
-            )
 
-        axes = [axd[model] for model in bias_ratio["model"].values]
-        fig.colorbar(pcm, ax=axes, location="right")
+    axes = [axd[model] for model in bias_ratio["model"].values]
+    fig.colorbar(pcm, ax=axes, location="right", shrink=0.8, extend="both")
 
-        plt.show()
+    plt.show()
 
 
 def plot_std_bias(ds, target_pr):
@@ -296,47 +285,38 @@ def plot_std_bias(ds, target_pr):
     sample_std = ds["pred_pr"].std(dim=["sample_id", "time"])
     std_ratio = sample_std / target_std
 
-    vmin = target_std.min().values
-    vmax = target_std.max().values
-
-    std_ratio_vmax = 1 + (abs(1 - std_ratio).max().values)
-
-    for source in sample_std["source"].values:
-        IPython.display.display_html(f"<h4>{source}</h4>", raw=True)
-
-        target_name = "$\\sigma_{CPM}$"
-        grid_spec = compute_gridspec(std_ratio["model"].values, target_name)
-        fig, axd = plt.subplot_mosaic(
-            grid_spec,
-            figsize=(grid_spec.shape[1] * 5.5, grid_spec.shape[0] * 5.5),
-            subplot_kw=dict(projection=cp_model_rotated_pole),
-            constrained_layout=True,
-        )
-        ax = axd[target_name]
-        plot_grid(
-            target_std,
+    target_name = "$\\sigma_{CPM}$"
+    grid_spec = compute_gridspec(std_ratio["model"].values, target_name)
+    fig, axd = plt.subplot_mosaic(
+        grid_spec,
+        figsize=(grid_spec.shape[1] * 5.5, grid_spec.shape[0] * 5.5),
+        subplot_kw=dict(projection=cp_model_rotated_pole),
+        constrained_layout=True,
+    )
+    ax = axd[target_name]
+    pcm = plot_grid(
+        target_std,
+        ax,
+        title=target_name,
+        norm=None,
+        add_colorbar=False,
+    )
+    fig.colorbar(pcm, ax=[ax], location="right", shrink=0.8, extend="both")
+    for model in std_ratio["model"].values:
+        ax = axd[model]
+        pcm = plot_grid(
+            std_ratio.sel(model=model),
             ax,
-            title=target_name,
+            title=f"{model} std dev bias",
             norm=None,
-            vmin=vmin,
-            vmax=vmax,
-            add_colorbar=True,
+            cmap="BrBG",
+            vmax=1.2,
+            center=1,
         )
-        for model in std_ratio["model"].values:
-            ax = axd[model]
-            pcm = plot_grid(
-                std_ratio.sel(source=source, model=model),
-                ax,
-                title=f"{model}",
-                norm=None,
-                cmap="BrBG",
-                vmax=std_ratio_vmax,
-                center=1,
-            )
-
-        axes = [axd[model] for model in std_ratio["model"].values]
-        fig.colorbar(pcm, ax=axes, location="right")
-        plt.show()
+    # plt.colorbar()
+    axes = [axd[model] for model in std_ratio["model"].values]
+    fig.colorbar(pcm, ax=axes, location="right", shrink=0.8, extend="both")
+    plt.show()
 
 
 def psd(batch):

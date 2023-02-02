@@ -6,14 +6,6 @@ from codetiming import Timer
 from knockknock import slack_sender
 import typer
 
-UNET_ARCHNAME = "u-net"
-SIMPLE_CONV_ARCHNAME = "simple-conv"
-EXPERIMENT_NAME = os.getenv("WANDB_EXPERIMENT_NAME")
-TAGS = {
-    UNET_ARCHNAME: ["baseline", UNET_ARCHNAME],
-    SIMPLE_CONV_ARCHNAME: ["baseline", SIMPLE_CONV_ARCHNAME, "debug"],
-}
-
 app = typer.Typer()
 
 logging.basicConfig(
