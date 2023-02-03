@@ -33,6 +33,7 @@ def queue_cmd(depends_on, sampling_jobs, sampling_duration):
     queue_basecmd = ["lbatch"]
 
     queue_opts = {
+        "-a": os.getenv("HPC_PROJECT_CODE"),
         "-g": "1",
         "-m": "16",
         "-q": "cnu,gpu",
