@@ -29,7 +29,7 @@ def main(
     # train
     train_cmd = (
         [f"{os.path.dirname(__file__)}/queue-training"]
-        + [run_id, cpm_dataset, epochs]
+        + [run_id, cpm_dataset, "--epochs", epochs]
         + ctx.args
     )
     print(" ".join(train_cmd).strip(), file=sys.stderr)
