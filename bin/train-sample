@@ -29,7 +29,7 @@ def main(
     # train
     train_cmd = (
         [f"{os.path.dirname(__file__)}/queue-training"]
-        + [run_id, cpm_dataset, "--epochs", epochs]
+        + [run_id, cpm_dataset, "--epochs", str(epochs)]
         + ctx.args
     )
     print(" ".join(train_cmd).strip(), file=sys.stderr)
@@ -43,7 +43,7 @@ def main(
         run_id,
         cpm_dataset,
         gcm_dataset,
-        epochs,
+        str(epochs),
         "--depends-on",
         training_job_id,
     ]
