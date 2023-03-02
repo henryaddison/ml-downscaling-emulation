@@ -13,7 +13,7 @@ import yaml
 
 from ml_downscaling_emulator.unet import unet
 from mlde_utils.training import log_epoch, track_run, save_checkpoint
-from mlde_utils.training.dataset import get_dataset
+from mlde_utils.torch import get_dataloader
 
 UNET_ARCHNAME = "u-net"
 SIMPLE_CONV_ARCHNAME = "simple-conv"
@@ -95,7 +95,7 @@ def main(
     logging.info(f"Using device {device}")
 
     # Build dataloaders
-    train_dl, _, _ = get_dataset(
+    train_dl, _, _ = get_dataloader(
         dataset,
         dataset,
         input_transform_key,
@@ -105,7 +105,7 @@ def main(
         split="train",
         evaluation=False,
     )
-    val_dl, _, _ = get_dataset(
+    val_dl, _, _ = get_dataloader(
         dataset,
         dataset,
         input_transform_key,

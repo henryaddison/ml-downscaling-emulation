@@ -10,7 +10,12 @@ import yaml
 
 from .. import sampling
 from mlde_utils.training import restore_checkpoint
-from mlde_utils.training.dataset import get_dataset, load_raw_dataset_split
+from mlde_utils.training.dataset import (
+    get_variables,
+    get_dataset,
+    load_raw_dataset_split,
+)
+
 from ..unet import unet
 
 logging.basicConfig(
@@ -53,19 +58,19 @@ def sample(
     os.makedirs(output_dirpath, exist_ok=True)
 
     transform_dir = os.path.join(workdir, "transforms")
-    eval_dl, _, target_transform = get_dataset(
+    xr_data_eval, _, target_transform = get_dataset(
         dataset,
         config["dataset"],
         config["input_transform_key"],
         config["target_transform_key"],
         transform_dir,
-        batch_size=batch_size,
         split=split,
         evaluation=True,
     )
+    variables, _ = get_variables(config["dataset"])
 
     ckpt_filename = os.path.join(workdir, "checkpoints", f"epoch_{epoch}.pth")
-    num_predictors, _, _ = eval_dl.dataset[0][0].shape
+    num_predictors = len(variables)
     model = unet.UNet(num_predictors, 1).to(device=device)
     model.eval()
     optimizer = torch.optim.Adam(model.parameters())
@@ -74,7 +79,9 @@ def sample(
 
     for sample_id in range(num_samples):
         typer.echo(f"Sample run {sample_id}...")
-        xr_samples = sampling.sample(state["model"], eval_dl, target_transform)
+        xr_samples = sampling.sample(
+            state["model"], xr_data_eval, batch_size, variables, target_transform
+        )
 
         output_filepath = os.path.join(
             output_dirpath, f"predictions-{shortuuid.uuid()}.nc"
