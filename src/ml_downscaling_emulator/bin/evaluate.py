@@ -10,7 +10,9 @@ import yaml
 
 from .. import sampling
 from mlde_utils.training import restore_checkpoint
-from mlde_utils.training.dataset import get_dataset, load_raw_dataset_split
+from mlde_utils.torch import get_dataloader
+from mlde_utils.training.dataset import load_raw_dataset_split
+
 from ..unet import unet
 
 logging.basicConfig(
@@ -53,7 +55,7 @@ def sample(
     os.makedirs(output_dirpath, exist_ok=True)
 
     transform_dir = os.path.join(workdir, "transforms")
-    eval_dl, _, target_transform = get_dataset(
+    eval_dl, _, target_transform = get_dataloader(
         dataset,
         config["dataset"],
         config["input_transform_key"],
