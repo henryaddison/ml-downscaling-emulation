@@ -10,7 +10,7 @@ import typer
 app = typer.Typer()
 
 
-def sample_cmd(dataset, epoch, samples_per_job, workdir):
+def sample_cmd(dataset, epoch, samples_per_job, workdir, input_transform_key=None):
     batch_size = 1024
 
     sample_basecmd = ["mlde", "evaluate", "sample"]
@@ -21,6 +21,9 @@ def sample_cmd(dataset, epoch, samples_per_job, workdir):
         "--dataset": dataset,
         "--batch-size": str(batch_size),
     }
+
+    if input_transform_key is not None:
+        sample_opts["--input-transform-key"] = input_transform_key
 
     return (
         sample_basecmd
@@ -54,6 +57,7 @@ def main(
     gcm_dataset: str,
     epoch: int,
     depends_on: int = None,
+    input_transform_key: str = None,
 ):
 
     sampling_jobs = 1
@@ -79,7 +83,7 @@ def main(
     full_cmd = (
         shared_queue_cmd
         + ["--"]
-        + sample_cmd(gcm_dataset, epoch, samples_per_job, workdir)
+        + sample_cmd(gcm_dataset, epoch, samples_per_job, workdir, input_transform_key)
     )
     print(" ".join(full_cmd).strip(), file=sys.stderr)
     output = subprocess.run(full_cmd, capture_output=True)
