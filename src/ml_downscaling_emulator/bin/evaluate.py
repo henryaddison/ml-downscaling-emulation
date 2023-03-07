@@ -42,6 +42,7 @@ def sample(
     epoch: int = typer.Option(...),
     batch_size: int = typer.Option(...),
     num_samples: int = 1,
+    input_transform_key: str = None,
 ):
 
     config_path = os.path.join(workdir, "config.yml")
@@ -51,10 +52,20 @@ def sample(
 
     split = "val"
 
+    if input_transform_key is not None:
+        config["input_transform_key"] = input_transform_key
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"Using device {device}")
 
-    output_dirpath = workdir / "samples" / f"epoch-{epoch}" / dataset / split
+    output_dirpath = (
+        workdir
+        / "samples"
+        / f"epoch-{epoch}"
+        / dataset
+        / config["input_transform_key"]
+        / split
+    )
     os.makedirs(output_dirpath, exist_ok=True)
 
     transform_dir = os.path.join(workdir, "transforms")
